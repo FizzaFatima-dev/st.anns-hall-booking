@@ -59,7 +59,7 @@ export default function BookingPage() {
     }]);
 
     if (!error) {
-      alert("Zabardast! Booking Successful.");
+      alert(" Booking Successful!");
       setIsRegistering(false);
       window.location.reload(); 
     } else {
