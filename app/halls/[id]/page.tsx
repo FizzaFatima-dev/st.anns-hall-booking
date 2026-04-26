@@ -57,7 +57,7 @@ export default function BookingPage() {
       alert("Error sending code: " + error.message);
     } else {
       setIsVerifying(true);
-      alert("6-digit code sent to " + formData.email);
+      alert("8-digit code sent to " + formData.email);
     }
   };
 
