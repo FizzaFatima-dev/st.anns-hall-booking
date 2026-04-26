@@ -60,7 +60,9 @@ export default function AdminPortal() {
               <th className="p-6">Event & Hall</th>
               <th className="p-6">Date & Time</th>
               <th className="p-6">Organized By</th>
+               <th className="p-6">Department</th>
               <th className="p-6 text-right">Actions</th>
+             
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
@@ -82,7 +84,11 @@ export default function AdminPortal() {
                   <p className="font-bold text-slate-900 text-xs">{booking.user_name}</p>
                   <p className="text-slate-400 text-[10px]">{booking.user_email}</p>
                 </td>
+                <td className="p-6">
+                  <p className="font-bold text-slate-900 text-xs">{booking.department}</p>
+                </td>
                 <td className="p-6 text-right">
+                    
                   <button 
                     onClick={() => handleDelete(booking.id)}
                     className="p-3 text-rose-500 hover:bg-rose-50 rounded-xl transition-all"

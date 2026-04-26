@@ -20,7 +20,6 @@ export default function BookingPage() {
   const [isRegistering, setIsRegistering] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
-  // --- NEW STATES FOR OTP ---
   const [isVerifying, setIsVerifying] = useState(false);
   const [otpCode, setOtpCode] = useState('');
   const [loading, setLoading] = useState(false);
@@ -40,10 +39,9 @@ export default function BookingPage() {
     fetchData();
   }, [id]);
 
-  // --- STEP 1: SEND OTP ---
   const handleSendOTP = async () => {
-    if (!formData.email || !formData.fullName) {
-      alert("Please enter your name and email first.");
+    if (!formData.email || !formData.fullName || !formData.dept) {
+      alert("Please enter Name, Email, and Department.");
       return;
     }
     setLoading(true);
@@ -54,19 +52,17 @@ export default function BookingPage() {
     setLoading(false);
 
     if (error) {
-      alert("Error sending code: " + error.message);
+      alert("Error: " + error.message);
     } else {
       setIsVerifying(true);
-      alert("8-digit code sent to " + formData.email);
+      alert("Verification code sent to " + formData.email);
     }
   };
 
-  // --- STEP 2: VERIFY & BOOK ---
   const handleVerifyAndBook = async () => {
     if (!otpCode) return alert("Please enter the code.");
     setLoading(true);
 
-    // 1. Verify the OTP
     const { error: otpError } = await supabase.auth.verifyOtp({
       email: formData.email,
       token: otpCode,
@@ -75,11 +71,10 @@ export default function BookingPage() {
 
     if (otpError) {
       setLoading(false);
-      alert("Invalid or expired code. Please try again.");
+      alert("Invalid Code. Check your email again.");
       return;
     }
 
-    // 2. If OTP is correct, Save Booking
     const { error: bookingError } = await supabase.from('bookings').insert([{
       hall_id: id,
       event_name: formData.eventName,
@@ -95,7 +90,7 @@ export default function BookingPage() {
     setLoading(false);
 
     if (!bookingError) {
-      alert("Verified & Booking Successful!");
+      alert("Success! Slot Booked.");
       setIsRegistering(false);
       window.location.reload(); 
     } else {
@@ -105,13 +100,12 @@ export default function BookingPage() {
 
   if (!hall) return <div className="h-screen flex items-center justify-center font-black animate-pulse text-emerald-500 uppercase tracking-widest">Loading...</div>;
 
-  // --- VIEW 1: REGISTRATION FORM (WITH OTP UI) ---
   if (isRegistering && selectedDate) {
     return (
       <div className="min-h-screen bg-[#F8FAFC] pb-20">
         <nav className="bg-white border-b border-slate-100 px-12 py-6 sticky top-0 z-30 flex justify-between items-center shadow-sm">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 bg-[#10B981] rounded-xl flex items-center justify-center shadow-lg shadow-emerald-100"><Building2 className="text-white w-4 h-4" /></div>
+            <div className="w-9 h-9 bg-[#10B981] rounded-xl flex items-center justify-center shadow-lg"><Building2 className="text-white w-4 h-4" /></div>
             <span className="text-xl font-black tracking-tighter uppercase text-slate-900">St. Ann's</span>
           </div>
           <button onClick={() => { setIsRegistering(false); setIsVerifying(false); }} className="flex items-center gap-2 text-slate-400 hover:text-emerald-600 font-black text-[10px] uppercase tracking-widest transition-colors">
@@ -120,13 +114,13 @@ export default function BookingPage() {
         </nav>
 
         <div className="max-w-4xl mx-auto mt-12 px-6">
-          <div className="bg-white rounded-[3.5rem] shadow-2xl shadow-slate-200/30 border border-slate-100 overflow-hidden">
+          <div className="bg-white rounded-[3.5rem] shadow-2xl border border-slate-100 overflow-hidden">
             <div className="bg-slate-900 p-10 text-white flex justify-between items-center">
               <div className="flex items-center gap-5">
                 <div className="w-14 h-14 bg-emerald-500/20 rounded-2xl flex items-center justify-center"><Building2 className="text-emerald-400 w-7 h-7" /></div>
                 <div>
                   <h2 className="text-2xl font-black tracking-tight uppercase italic">{hall.name}</h2>
-                  <p className="text-slate-400 text-[10px] font-bold uppercase tracking-[0.2em]">Verification Required</p>
+                  <p className="text-slate-400 text-[10px] font-bold uppercase tracking-[0.2em]">Secure Registration</p>
                 </div>
               </div>
               <div className="bg-white/10 px-6 py-3 rounded-2xl border border-white/10 flex items-center gap-3">
@@ -137,7 +131,6 @@ export default function BookingPage() {
 
             <div className="p-12 space-y-12">
                 {!isVerifying ? (
-                  // STEP 1 UI: GATHER DETAILS
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
                     <div className="col-span-full border-b border-slate-50 pb-2 flex items-center gap-2">
                         <User className="w-4 h-4 text-emerald-500" />
@@ -162,28 +155,27 @@ export default function BookingPage() {
                     </button>
                   </div>
                 ) : (
-                  // STEP 2 UI: OTP VERIFICATION
                   <div className="max-w-md mx-auto text-center space-y-8 py-10">
                     <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto">
                       <ShieldCheck className="w-10 h-10 text-emerald-600" />
                     </div>
                     <div>
-                      <h3 className="text-2xl font-black uppercase italic tracking-tight">Verify Your Email</h3>
-                      <p className="text-slate-400 text-sm mt-2">Enter the 6-digit code sent to <br/><span className="text-slate-900 font-bold">{formData.email}</span></p>
+                      <h3 className="text-2xl font-black uppercase italic tracking-tight text-slate-900">Verify Your Email</h3>
+                      <p className="text-slate-400 text-sm mt-2">Enter the 8-digit code sent to <br/><span className="text-slate-900 font-bold">{formData.email}</span></p>
                     </div>
                     <input 
                       type="text" 
                       maxLength={8} 
-                      placeholder="000000" 
+                      placeholder="00000000" 
                       value={otpCode}
                       onChange={e => setOtpCode(e.target.value)}
-                      className="w-full text-center text-4xl font-black tracking-[0.5em] border-b-4 border-emerald-500 pb-4 outline-none"
+                      className="w-full text-center text-4xl font-black tracking-[0.2em] border-b-4 border-emerald-500 pb-4 outline-none text-slate-900"
                     />
                     <div className="pt-6 space-y-4">
                       <button onClick={handleVerifyAndBook} disabled={loading} className="w-full py-5 bg-emerald-600 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:bg-emerald-700 transition-all">
-                        {loading ? 'Verifying...' : 'Verify & Confirm Booking'}
+                        {loading ? 'Verifying...' : 'Confirm Booking'}
                       </button>
-                      <button onClick={() => setIsVerifying(false)} className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900">Edit Email</button>
+                      <button onClick={() => setIsVerifying(false)} className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900">Edit Info</button>
                     </div>
                   </div>
                 )}
@@ -194,7 +186,6 @@ export default function BookingPage() {
     );
   }
 
-  // --- VIEW 2: CALENDAR (UNCHANGED LOGIC) ---
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(monthStart);
   const startDate = startOfWeek(monthStart);
@@ -217,9 +208,9 @@ export default function BookingPage() {
         </button>
 
         <h1 className="text-5xl font-black tracking-tight text-slate-900 mb-3 leading-none uppercase italic">{hall.name}</h1>
-        <p className="text-slate-400 font-bold text-sm mb-12 italic opacity-70 tracking-tight">Select an available date to register your event.</p>
+        <p className="text-slate-400 font-bold text-sm mb-12 italic opacity-70 tracking-tight">Check below for multiple event schedules.</p>
 
-        <div className="bg-white rounded-[3rem] shadow-[0_30px_60px_rgba(0,0,0,0.02)] border border-slate-100 overflow-hidden mb-10">
+        <div className="bg-white rounded-[3rem] shadow-sm border border-slate-100 overflow-hidden mb-10">
           <div className="p-10 flex justify-between items-center border-b border-slate-50">
             <h2 className="text-3xl font-black tracking-tighter text-slate-800 uppercase">{format(currentDate, 'MMMM yyyy')}</h2>
             <div className="flex items-center gap-2 bg-slate-50 p-1.5 rounded-2xl">
@@ -241,21 +232,24 @@ export default function BookingPage() {
               const isPast = isBefore(day, todayDate) && !isToday;
               
               return (
-                <div key={idx} className={`min-h-[160px] p-5 border-b border-r border-slate-50 transition-all group relative ${!isCurrentMonth || isPast ? 'opacity-20 bg-slate-50/50 cursor-not-allowed' : 'hover:bg-emerald-50/30 cursor-pointer'}`}>
-                  <div className="flex justify-between items-center mb-4">
+                <div key={idx} className={`min-h-[180px] p-4 border-b border-r border-slate-50 transition-all group relative ${!isCurrentMonth || isPast ? 'opacity-20 bg-slate-50/50 cursor-not-allowed' : 'hover:bg-emerald-50/30 cursor-pointer'}`}>
+                  <div className="flex justify-between items-center mb-3">
                     <span className={`text-base font-black w-8 h-8 flex items-center justify-center rounded-full ${isToday ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-200' : 'text-slate-900'}`}>{format(day, 'd')}</span>
                   </div>
-                  <div className="space-y-2">
+                  
+                  {/* MULTIPLE BOOKINGS SCROLL AREA */}
+                  <div className="space-y-2 max-h-[100px] overflow-y-auto no-scrollbar">
                     {dayBookings.map((b, i) => (
-                      <div key={i} className="bg-rose-50 border border-rose-100 p-2.5 rounded-xl">
+                      <div key={i} className="bg-rose-50 border border-rose-100 p-2 rounded-xl">
                         <p className="text-[9px] font-black text-rose-600 uppercase truncate leading-tight">{b.event_name}</p>
-                        <p className="text-[8px] font-bold text-rose-400 flex items-center gap-1 uppercase tracking-tighter"><Clock className="w-2.5 h-2.5" /> {b.start_time} - {b.end_time}</p>
+                        <p className="text-[8px] font-bold text-rose-400 flex items-center gap-1 uppercase tracking-tighter"><Clock className="w-2.5 h-2.5" /> {b.start_time.slice(0,5)}</p>
                       </div>
                     ))}
-                    {isCurrentMonth && !isPast && dayBookings.length === 0 && (
-                      <button onClick={() => { setSelectedDate(day); setIsRegistering(true); }} className="opacity-0 group-hover:opacity-100 w-full py-3 border-2 border-dashed border-emerald-200 rounded-xl text-[9px] font-black text-emerald-500 uppercase tracking-widest hover:bg-emerald-500 hover:text-white transition-all">+ BOOK SLOT</button>
-                    )}
                   </div>
+
+                  {isCurrentMonth && !isPast && (
+                    <button onClick={() => { setSelectedDate(day); setIsRegistering(true); }} className="mt-3 opacity-0 group-hover:opacity-100 w-full py-2 border-2 border-dashed border-emerald-200 rounded-xl text-[8px] font-black text-emerald-500 uppercase tracking-widest hover:bg-emerald-500 hover:text-white transition-all">+ ADD EVENT</button>
+                  )}
                 </div>
               );
             })}
