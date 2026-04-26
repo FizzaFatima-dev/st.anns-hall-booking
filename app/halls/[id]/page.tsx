@@ -173,7 +173,7 @@ export default function BookingPage() {
                     </div>
                     <input 
                       type="text" 
-                      maxLength={6} 
+                      maxLength={8} 
                       placeholder="000000" 
                       value={otpCode}
                       onChange={e => setOtpCode(e.target.value)}
