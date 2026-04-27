@@ -64,30 +64,33 @@ export default function BookingPage() {
     if (!otpCode) return alert("Please enter the code.");
     setLoading(true);
 
-    // --- UPDATED OTP VERIFICATION LOGIC ---
-    // We try 'signup' first for pending users, then fallback to 'login'
-    let { error: otpError } = await supabase.auth.verifyOtp({
-      email: formData.email,
-      token: otpCode,
-      type: 'signup'
-    });
+    // TRIPLE-CHECK OTP LOGIC: Try all possible types to find the right one
+    const types = ['signup', 'login', 'invite'];
+    let lastError = null;
+    let isVerified = false;
 
-    if (otpError) {
-      const { error: loginError } = await supabase.auth.verifyOtp({
+    for (const type of types) {
+      const { error } = await supabase.auth.verifyOtp({
         email: formData.email,
         token: otpCode,
-        type: 'login'
+        type: type as any
       });
-      otpError = loginError;
+      
+      if (!error) {
+        isVerified = true;
+        break;
+      }
+      lastError = error;
     }
 
-    if (otpError) {
+    if (!isVerified) {
       setLoading(false);
-      alert("Invalid Code or Expired. Please try again.");
+      console.error("Verification failed:", lastError);
+      alert("Invalid Code. Please ensure you use the LATEST code sent to your email.");
       return;
     }
 
-    // --- DATABASE INSERTION ---
+    // --- PROCEED TO BOOKING AFTER SUCCESSFUL VERIFICATION ---
     const { error: bookingError } = await supabase.from('bookings').insert([{
       hall_id: id,
       event_name: formData.eventName,
@@ -182,18 +185,18 @@ export default function BookingPage() {
                         <User className="w-4 h-4 text-emerald-500" />
                         <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Step 1: Event Details</h3>
                     </div>
-                    <input type="text" placeholder="FULL NAME *" onChange={e => setFormData({...formData, fullName: e.target.value})} className="border-b-2 border-slate-300 py-4 font-bold text-base outline-none focus:border-emerald-500 uppercase bg-transparent text-slate-900 placeholder:text-slate-400 w-full" />
-                    <input type="email" placeholder="EMAIL ADDRESS *" onChange={e => setFormData({...formData, email: e.target.value})} className="border-b-2 border-slate-300 py-4 font-bold text-base outline-none focus:border-emerald-500 text-slate-900 placeholder:text-slate-400 w-full" />
-                    <input type="text" placeholder="DEPARTMENT *" onChange={e => setFormData({...formData, dept: e.target.value})} className="border-b-2 border-slate-300 py-4 font-bold text-base outline-none focus:border-emerald-500 uppercase text-slate-900 placeholder:text-slate-400 w-full" />
-                    <input type="text" placeholder="EVENT NAME *" onChange={e => setFormData({...formData, eventName: e.target.value})} className="border-b-2 border-slate-300 py-4 font-bold text-base outline-none focus:border-emerald-500 uppercase text-slate-900 placeholder:text-slate-400 w-full" />
+                    <input type="text" placeholder="FULL NAME *" value={formData.fullName} onChange={e => setFormData({...formData, fullName: e.target.value})} className="border-b-2 border-slate-300 py-4 font-bold text-base outline-none focus:border-emerald-500 uppercase bg-transparent text-slate-900 placeholder:text-slate-400 w-full" />
+                    <input type="email" placeholder="EMAIL ADDRESS *" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="border-b-2 border-slate-300 py-4 font-bold text-base outline-none focus:border-emerald-500 text-slate-900 placeholder:text-slate-400 w-full" />
+                    <input type="text" placeholder="DEPARTMENT *" value={formData.dept} onChange={e => setFormData({...formData, dept: e.target.value})} className="border-b-2 border-slate-300 py-4 font-bold text-base outline-none focus:border-emerald-500 uppercase text-slate-900 placeholder:text-slate-400 w-full" />
+                    <input type="text" placeholder="EVENT NAME *" value={formData.eventName} onChange={e => setFormData({...formData, eventName: e.target.value})} className="border-b-2 border-slate-300 py-4 font-bold text-base outline-none focus:border-emerald-500 uppercase text-slate-900 placeholder:text-slate-400 w-full" />
                     
                     <div className="space-y-1">
                         <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Start Time</label>
-                        <input type="time" onChange={e => setFormData({...formData, startTime: e.target.value})} className="w-full border-b-2 border-slate-300 py-4 font-bold text-base outline-none focus:border-emerald-500 text-slate-900 bg-transparent" />
+                        <input type="time" value={formData.startTime} onChange={e => setFormData({...formData, startTime: e.target.value})} className="w-full border-b-2 border-slate-300 py-4 font-bold text-base outline-none focus:border-emerald-500 text-slate-900 bg-transparent" />
                     </div>
                     <div className="space-y-1">
                         <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">End Time</label>
-                        <input type="time" onChange={e => setFormData({...formData, endTime: e.target.value})} className="w-full border-b-2 border-slate-300 py-4 font-bold text-base outline-none focus:border-emerald-500 text-slate-900 bg-transparent" />
+                        <input type="time" value={formData.endTime} onChange={e => setFormData({...formData, endTime: e.target.value})} className="w-full border-b-2 border-slate-300 py-4 font-bold text-base outline-none focus:border-emerald-500 text-slate-900 bg-transparent" />
                     </div>
 
                     <button onClick={handleSendOTP} disabled={loading} className="col-span-full mt-6 py-5 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:bg-emerald-600 transition-all active:scale-95">
