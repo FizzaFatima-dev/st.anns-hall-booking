@@ -64,18 +64,30 @@ export default function BookingPage() {
     if (!otpCode) return alert("Please enter the code.");
     setLoading(true);
 
-    const { error: otpError } = await supabase.auth.verifyOtp({
+    // --- UPDATED OTP VERIFICATION LOGIC ---
+    // We try 'signup' first for pending users, then fallback to 'login'
+    let { error: otpError } = await supabase.auth.verifyOtp({
       email: formData.email,
       token: otpCode,
-      type: 'magiclink'
+      type: 'signup'
     });
 
     if (otpError) {
+      const { error: loginError } = await supabase.auth.verifyOtp({
+        email: formData.email,
+        token: otpCode,
+        type: 'login'
+      });
+      otpError = loginError;
+    }
+
+    if (otpError) {
       setLoading(false);
-      alert("Invalid Code. Check your email again.");
+      alert("Invalid Code or Expired. Please try again.");
       return;
     }
 
+    // --- DATABASE INSERTION ---
     const { error: bookingError } = await supabase.from('bookings').insert([{
       hall_id: id,
       event_name: formData.eventName,
@@ -99,7 +111,6 @@ export default function BookingPage() {
 
   if (!hall) return <div className="h-screen flex items-center justify-center font-black animate-pulse text-emerald-500 uppercase tracking-widest">Loading...</div>;
 
-  // --- SUCCESS VIEW ---
   if (isSuccess) {
     return (
       <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-6">
@@ -127,10 +138,7 @@ export default function BookingPage() {
             </div>
           </div>
 
-          <button 
-            onClick={() => window.location.reload()} 
-            className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:bg-emerald-600 transition-all active:scale-95"
-          >
+          <button onClick={() => window.location.reload()} className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:bg-emerald-600 transition-all active:scale-95">
             Back to Calendar
           </button>
         </div>
@@ -138,7 +146,6 @@ export default function BookingPage() {
     );
   }
 
-  // --- REGISTRATION VIEW ---
   if (isRegistering && selectedDate) {
     return (
       <div className="min-h-screen bg-[#F8FAFC] pb-20">
@@ -200,16 +207,21 @@ export default function BookingPage() {
                     </div>
                     <div>
                       <h3 className="text-xl md:text-2xl font-black uppercase italic tracking-tight text-slate-900">Verify Your Email</h3>
-                      <p className="text-slate-400 text-sm mt-2">Enter the 6-digit code sent to <br/><span className="text-slate-900 font-bold break-all underline decoration-emerald-500/30">{formData.email}</span></p>
+                      <p className="text-slate-400 text-sm mt-2 font-medium">
+                        Enter the 6-digit code sent to <br/>
+                        <span className="text-slate-900 font-bold break-all underline decoration-emerald-500/30">{formData.email}</span>
+                      </p>
                     </div>
+                    
                     <input 
                       type="text" 
                       maxLength={6} 
                       placeholder="000000" 
                       value={otpCode}
                       onChange={e => setOtpCode(e.target.value)}
-                      className="w-full text-center text-4xl md:text-5xl font-black tracking-[0.3em] border-b-4 border-emerald-500 pb-4 outline-none text-slate-900 bg-transparent"
+                      className="w-full text-center text-4xl md:text-5xl font-black tracking-[0.3em] border-b-4 border-emerald-500 pb-4 outline-none text-slate-900 bg-transparent placeholder:text-slate-200"
                     />
+
                     <div className="pt-6 space-y-4">
                       <button onClick={handleVerifyAndBook} disabled={loading} className="w-full py-5 bg-emerald-600 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:bg-emerald-700 transition-all">
                         {loading ? 'Verifying...' : 'Confirm Booking'}
