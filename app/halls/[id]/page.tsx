@@ -285,4 +285,68 @@ export default function BookingPage() {
       </div>
     </div>
   );
+  {/* Compact Footer */}
+      <footer className="bg-[#059669] text-white py-10 px-10">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 items-start">
+          
+          {/* Logo Section - Paragraph Removed */}
+          <div className="col-span-1">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm">
+                <Building2 className="text-[#059669] w-5 h-5" />
+              </div>
+              <span className="text-xl font-black tracking-tighter italic uppercase">St. Ann's</span>
+            </div>
+          </div>
+
+          {/* Navigation */}
+          <div>
+            <h4 className="font-bold text-[10px] uppercase tracking-[0.2em] mb-4 text-white/50">Navigation</h4>
+            <ul className="space-y-2 text-[11px] font-bold uppercase tracking-wide">
+              <li><button onClick={scrollToTop} className="hover:text-emerald-200 transition-colors">Home</button></li>
+              <li><button onClick={scrollToAvailability} className="hover:text-emerald-200 transition-colors text-left">Availability</button></li>
+            </ul>
+          </div>
+
+          {/* Campus Spaces */}
+          <div>
+            <h4 className="font-bold text-[10px] uppercase tracking-[0.2em] mb-4 text-white/50">Campus Spaces</h4>
+            <ul className="space-y-2 text-[11px] font-bold uppercase tracking-wide">
+              {halls.map(hall => (
+                <li key={hall.id} className="text-emerald-50 italic">{hall.name}</li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Contact Office */}
+          <div>
+            <h4 className="font-bold text-[10px] uppercase tracking-[0.2em] mb-4 text-white/50">Contact Office</h4>
+            <ul className="space-y-3 text-[11px] font-bold uppercase tracking-wide">
+              <li>
+                <a href="mailto:info@stannscollegehyd.com" className="flex items-center gap-2 text-emerald-50 hover:text-white transition-colors group">
+                  <Mail className="w-3.5 h-3.5 text-emerald-200" /> 
+                  info@stannscollegehyd.com
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="https://www.google.com/maps?ll=17.39332,78.437838&z=15&t=m&hl=en&gl=IN&mapclient=embed&cid=3230818851375227641" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="flex items-center gap-2 text-emerald-50 hover:text-white transition-colors group"
+                >
+                  <MapPin className="w-3.5 h-3.5 text-emerald-200" /> 
+                  Mehdipatnam, Hyd
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+        
+        {/* Bottom Bar */}
+        <div className="max-w-7xl mx-auto mt-10 pt-6 border-t border-white/10 flex justify-between items-center text-[9px] font-black uppercase tracking-[0.2em] text-emerald-200/60">
+          <p>© 2026 St. Ann's College Booking Portal</p>
+          <p className="hidden md:block italic">Direct. Digital. Departmental.</p>
+        </div>
+      </footer>
 }
