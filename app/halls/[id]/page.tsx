@@ -8,11 +8,10 @@ import {
 } from 'date-fns';
 import { 
   ChevronLeft, ChevronRight, Building2, Calendar as LucideCalendar, 
-  CheckCircle2, Clock, ArrowLeft, User, Settings, ShieldCheck, Mail
+  CheckCircle2, Clock, ArrowLeft, User, ShieldCheck
 } from 'lucide-react';
 
 export default function BookingPage() {
-  const [isSuccess, setIsSuccess] = useState(false);
   const { id } = useParams();
   const router = useRouter();
   const [hall, setHall] = useState<any>(null);
@@ -20,6 +19,7 @@ export default function BookingPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isRegistering, setIsRegistering] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const [isVerifying, setIsVerifying] = useState(false);
   const [otpCode, setOtpCode] = useState('');
@@ -90,8 +90,8 @@ export default function BookingPage() {
 
     setLoading(false);
 
-   if (!bookingError) {
-      setIsSuccess(true); // Show the success screen instead of reloading
+    if (!bookingError) {
+      setIsSuccess(true);
     } else {
       alert("Database Error: " + bookingError.message);
     }
@@ -99,7 +99,7 @@ export default function BookingPage() {
 
   if (!hall) return <div className="h-screen flex items-center justify-center font-black animate-pulse text-emerald-500 uppercase tracking-widest">Loading...</div>;
 
-  // --- REGISTRATION VIEW (Must be inside the function) ---
+  // --- SUCCESS VIEW ---
   if (isSuccess) {
     return (
       <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-6">
@@ -115,15 +115,15 @@ export default function BookingPage() {
           <div className="bg-slate-50 rounded-3xl p-6 mb-8 text-left space-y-3 border border-slate-100">
             <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-slate-400">
               <span>Hall</span>
-              <span className="text-slate-900">{hall.name}</span>
+              <span className="text-slate-900 font-bold">{hall.name}</span>
             </div>
             <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-slate-400">
               <span>Date</span>
-              <span className="text-slate-900">{format(selectedDate!, 'MMM do, yyyy')}</span>
+              <span className="text-slate-900 font-bold">{format(selectedDate!, 'MMM do, yyyy')}</span>
             </div>
             <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-slate-400">
               <span>Time</span>
-              <span className="text-slate-900">{formData.startTime} - {formData.endTime}</span>
+              <span className="text-slate-900 font-bold">{formData.startTime} - {formData.endTime}</span>
             </div>
           </div>
 
@@ -137,6 +137,8 @@ export default function BookingPage() {
       </div>
     );
   }
+
+  // --- REGISTRATION VIEW ---
   if (isRegistering && selectedDate) {
     return (
       <div className="min-h-screen bg-[#F8FAFC] pb-20">
@@ -173,7 +175,6 @@ export default function BookingPage() {
                         <User className="w-4 h-4 text-emerald-500" />
                         <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Step 1: Event Details</h3>
                     </div>
-                    
                     <input type="text" placeholder="FULL NAME *" onChange={e => setFormData({...formData, fullName: e.target.value})} className="border-b-2 border-slate-300 py-4 font-bold text-base outline-none focus:border-emerald-500 uppercase bg-transparent text-slate-900 placeholder:text-slate-400 w-full" />
                     <input type="email" placeholder="EMAIL ADDRESS *" onChange={e => setFormData({...formData, email: e.target.value})} className="border-b-2 border-slate-300 py-4 font-bold text-base outline-none focus:border-emerald-500 text-slate-900 placeholder:text-slate-400 w-full" />
                     <input type="text" placeholder="DEPARTMENT *" onChange={e => setFormData({...formData, dept: e.target.value})} className="border-b-2 border-slate-300 py-4 font-bold text-base outline-none focus:border-emerald-500 uppercase text-slate-900 placeholder:text-slate-400 w-full" />
@@ -199,15 +200,15 @@ export default function BookingPage() {
                     </div>
                     <div>
                       <h3 className="text-xl md:text-2xl font-black uppercase italic tracking-tight text-slate-900">Verify Your Email</h3>
-                      <p className="text-slate-400 text-sm mt-2">Enter the 8-digit code sent to <br/><span className="text-slate-900 font-bold break-all">{formData.email}</span></p>
+                      <p className="text-slate-400 text-sm mt-2">Enter the 6-digit code sent to <br/><span className="text-slate-900 font-bold break-all underline decoration-emerald-500/30">{formData.email}</span></p>
                     </div>
                     <input 
                       type="text" 
-                      maxLength={8} 
-                      placeholder="00000000" 
+                      maxLength={6} 
+                      placeholder="000000" 
                       value={otpCode}
                       onChange={e => setOtpCode(e.target.value)}
-                      className="w-full text-center text-3xl md:text-4xl font-black tracking-[0.2em] border-b-4 border-emerald-500 pb-4 outline-none text-slate-900 bg-transparent"
+                      className="w-full text-center text-4xl md:text-5xl font-black tracking-[0.3em] border-b-4 border-emerald-500 pb-4 outline-none text-slate-900 bg-transparent"
                     />
                     <div className="pt-6 space-y-4">
                       <button onClick={handleVerifyAndBook} disabled={loading} className="w-full py-5 bg-emerald-600 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:bg-emerald-700 transition-all">
