@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
-import { Building2, Users, Wifi, Monitor, CheckCircle2, ArrowRight, Calendar } from 'lucide-react';
+import { Building2, Users, Wifi, CheckCircle2, ArrowRight, Calendar, Mail, MapPin } from 'lucide-react';
 
 export default function Home() {
   const [halls, setHalls] = useState<any[]>([]);
@@ -15,6 +15,11 @@ export default function Home() {
     fetchHalls();
   }, []);
 
+  // Scroll to Top for Home Link
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const scrollToAvailability = () => {
     document.getElementById('availability-section')?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -22,7 +27,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-white font-sans antialiased text-slate-900">
       {/* Navigation - St. Ann's Branding */}
-      <nav className="absolute top-0 w-full z-30 flex justify-between items-center px-10 py-8">
+      <nav id="top-section" className="absolute top-0 w-full z-30 flex justify-between items-center px-10 py-8">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-[#10B981] rounded-lg flex items-center justify-center shadow-md shadow-emerald-200">
             <Building2 className="text-white w-4 h-4" />
@@ -30,8 +35,9 @@ export default function Home() {
           <span className="text-xl font-black tracking-tighter text-white uppercase italic">St. Ann's <span className="text-emerald-400">Halls</span></span>
         </div>
         <div className="hidden md:flex gap-8 text-white/80 font-bold text-[10px] uppercase tracking-[0.2em]">
-          <Link href="/" className="hover:text-emerald-400 transition-colors">Home</Link>
-          <button onClick={scrollToAvailability} className="hover:text-emerald-400 transition-colors">Availability</button>
+          {/* Linked to top */}
+          <button onClick={scrollToTop} className="hover:text-emerald-400 transition-colors uppercase">Home</button>
+          <button onClick={scrollToAvailability} className="hover:text-emerald-400 transition-colors uppercase">Availability</button>
         </div>
       </nav>
 
@@ -65,7 +71,6 @@ export default function Home() {
             </button>
           </div>
 
-          {/* Right Side Compact Glass Cards */}
           <div className="hidden lg:block space-y-3">
             {halls.map((hall) => (
               <div key={hall.id} className="bg-white/5 backdrop-blur-xl border border-white/10 p-4 rounded-2xl flex justify-between items-center hover:bg-white/10 transition-all">
@@ -84,11 +89,6 @@ export default function Home() {
               </div>
             ))}
           </div>
-        </div>
-        
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-40">
-          <span className="text-[10px] font-black uppercase tracking-widest text-white">Scroll Down</span>
-          <div className="w-px h-12 bg-gradient-to-b from-emerald-400 to-transparent" />
         </div>
       </header>
 
@@ -120,7 +120,6 @@ export default function Home() {
 
                 <div className="p-8">
                   <h3 className="text-xl font-black text-slate-900 mb-4 tracking-tight uppercase italic">{hall.name}</h3>
-                  
                   <div className="flex flex-wrap gap-2 mb-10">
                     <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100">
                       <Users className="w-3.5 h-3.5" /> {hall.capacity} Seats
@@ -129,7 +128,6 @@ export default function Home() {
                       <Wifi className="w-3.5 h-3.5" /> High Speed WiFi
                     </div>
                   </div>
-
                   <Link 
                     href={`/halls/${hall.id}`} 
                     className="flex justify-center items-center gap-2 w-full py-4 bg-slate-900 text-white rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-[#10B981] transition-all shadow-xl shadow-slate-100 hover:shadow-emerald-100 active:scale-95"
@@ -143,10 +141,10 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Minimal Footer with St. Ann's Details */}
+      {/* Footer */}
       <footer className="bg-[#059669] text-white py-16 px-10">
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12">
-          <div className="col-span-1 md:col-span-1">
+          <div>
             <div className="flex items-center gap-2 mb-6">
               <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
                 <Building2 className="text-[#059669] w-5 h-5" />
@@ -161,7 +159,7 @@ export default function Home() {
           <div>
             <h4 className="font-bold text-sm uppercase tracking-widest mb-6 text-white/70">Navigation</h4>
             <ul className="space-y-4 text-sm font-medium">
-              <li><Link href="/" className="hover:text-emerald-200 transition-colors">Home</Link></li>
+              <li><button onClick={scrollToTop} className="hover:text-emerald-200 transition-colors">Home</button></li>
               <li><button onClick={scrollToAvailability} className="hover:text-emerald-200 transition-colors text-left">View Availability</button></li>
             </ul>
           </div>
@@ -170,24 +168,38 @@ export default function Home() {
             <h4 className="font-bold text-sm uppercase tracking-widest mb-6 text-white/70">Campus Spaces</h4>
             <ul className="space-y-4 text-sm font-medium">
               {halls.map(hall => (
-                <li key={hall.id} className="flex justify-between items-center pr-8">
-                  <span className="text-emerald-50 italic uppercase text-[11px] font-bold">{hall.name}</span>
-                </li>
+                <li key={hall.id} className="text-emerald-50 italic uppercase text-[11px] font-bold">{hall.name}</li>
               ))}
             </ul>
           </div>
 
+          {/* CONTACT OFFICE WITH LINKS */}
           <div>
             <h4 className="font-bold text-sm uppercase tracking-widest mb-6 text-white/70">Contact Office</h4>
-            <ul className="space-y-4 text-sm font-medium text-emerald-50">
-              <li className="flex items-center gap-3">📧 info@stannscollege.com</li>
-              <li className="flex items-center gap-3">📍 Mehdipatnam, Hyderabad</li>
+            <ul className="space-y-4 text-sm font-medium">
+              <li>
+                <a href="mailto:info@stannscollegehyd.com" className="flex items-center gap-3 text-emerald-50 hover:text-white transition-colors group">
+                  <Mail className="w-4 h-4 text-emerald-200 group-hover:scale-110 transition-transform" /> 
+                  info@stannscollegehyd.com
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="https://www.google.com/maps?ll=17.39332,78.437838&z=15&t=m&hl=en&gl=IN&mapclient=embed&cid=3230818851375227641" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="flex items-center gap-3 text-emerald-50 hover:text-white transition-colors group"
+                >
+                  <MapPin className="w-4 h-4 text-emerald-200 group-hover:scale-110 transition-transform" /> 
+                  Mehdipatnam, Hyderabad
+                </a>
+              </li>
             </ul>
           </div>
         </div>
         
         <div className="max-w-7xl mx-auto mt-16 pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] font-bold uppercase tracking-widest text-emerald-200">
-          <p>© 2025 St. Ann's College Booking Portal.</p>
+          <p>© 2026 St. Ann's College Booking Portal.</p>
         </div>
       </footer>
     </div>
