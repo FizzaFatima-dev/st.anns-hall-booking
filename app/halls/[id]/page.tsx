@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 
 export default function BookingPage() {
+  const [isSuccess, setIsSuccess] = useState(false);
   const { id } = useParams();
   const router = useRouter();
   const [hall, setHall] = useState<any>(null);
@@ -89,10 +90,8 @@ export default function BookingPage() {
 
     setLoading(false);
 
-    if (!bookingError) {
-      alert("Success! Slot Booked.");
-      setIsRegistering(false);
-      window.location.reload(); 
+   if (!bookingError) {
+      setIsSuccess(true); // Show the success screen instead of reloading
     } else {
       alert("Database Error: " + bookingError.message);
     }
@@ -101,6 +100,43 @@ export default function BookingPage() {
   if (!hall) return <div className="h-screen flex items-center justify-center font-black animate-pulse text-emerald-500 uppercase tracking-widest">Loading...</div>;
 
   // --- REGISTRATION VIEW (Must be inside the function) ---
+  if (isSuccess) {
+    return (
+      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-6">
+        <div className="max-w-md w-full bg-white rounded-[3rem] shadow-2xl border border-slate-100 p-12 text-center animate-in fade-in zoom-in duration-500">
+          <div className="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-8">
+            <CheckCircle2 className="w-12 h-12 text-emerald-600" />
+          </div>
+          <h2 className="text-3xl font-black uppercase italic tracking-tighter text-slate-900 mb-4">Booking Confirmed!</h2>
+          <p className="text-slate-500 text-sm font-medium mb-8">
+            Your reservation for <span className="text-slate-900 font-bold">{formData.eventName}</span> has been successfully recorded.
+          </p>
+          
+          <div className="bg-slate-50 rounded-3xl p-6 mb-8 text-left space-y-3 border border-slate-100">
+            <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-slate-400">
+              <span>Hall</span>
+              <span className="text-slate-900">{hall.name}</span>
+            </div>
+            <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-slate-400">
+              <span>Date</span>
+              <span className="text-slate-900">{format(selectedDate!, 'MMM do, yyyy')}</span>
+            </div>
+            <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-slate-400">
+              <span>Time</span>
+              <span className="text-slate-900">{formData.startTime} - {formData.endTime}</span>
+            </div>
+          </div>
+
+          <button 
+            onClick={() => window.location.reload()} 
+            className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:bg-emerald-600 transition-all active:scale-95"
+          >
+            Back to Calendar
+          </button>
+        </div>
+      </div>
+    );
+  }
   if (isRegistering && selectedDate) {
     return (
       <div className="min-h-screen bg-[#F8FAFC] pb-20">
