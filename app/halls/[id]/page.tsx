@@ -69,7 +69,7 @@ export default function BookingPage() {
     const { error: otpError } = await supabase.auth.verifyOtp({
       email: formData.email,
       token: otpCode,
-      type: 'signup'
+      type: 'email'
     });
 
     if (otpError) {
