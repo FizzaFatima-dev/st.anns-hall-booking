@@ -1,163 +1,208 @@
 'use client';
-import React from 'react';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
-import { 
-  Building2, 
-  Calendar, 
-  ShieldCheck, 
-  Clock, 
-  ArrowRight, 
-  Globe, 
-  GraduationCap,
-  MapPin,
-  Mail
-} from 'lucide-react';
+import { Building2, Users, Wifi, CheckCircle2, ArrowRight, Calendar, Mail, MapPin } from 'lucide-react';
 
-export default function LandingPage() {
+export default function Home() {
+  const [halls, setHalls] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function fetchHalls() {
+      const { data } = await supabase.from('halls').select('*');
+      if (data) setHalls(data);
+    }
+    fetchHalls();
+  }, []);
+
+  // Scroll to Top for Home Link
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const scrollToAvailability = () => {
+    document.getElementById('availability-section')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   return (
-    <div className="min-h-screen bg-[#FDFDFD] font-sans text-slate-900 selection:bg-emerald-100">
-      
-      {/* NAVIGATION */}
-      <nav className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-slate-100 px-6 md:px-12 py-5 flex justify-between items-center">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-emerald-600/20">
-            <Building2 className="w-6 h-6" />
+    <div className="min-h-screen bg-white font-sans antialiased text-slate-900">
+      {/* Navigation - St. Ann's Branding */}
+      <nav id="top-section" className="absolute top-0 w-full z-30 flex justify-between items-center px-10 py-8">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-[#10B981] rounded-lg flex items-center justify-center shadow-md shadow-emerald-200">
+            <Building2 className="text-white w-4 h-4" />
           </div>
-          <div className="flex flex-col">
-            <span className="text-xl font-black tracking-tighter uppercase italic leading-none">St. Ann's</span>
-            <span className="text-[9px] font-bold text-emerald-600 uppercase tracking-[0.2em]">Hall Booking</span>
-          </div>
+          <span className="text-xl font-black tracking-tighter text-white uppercase italic">St. Ann's <span className="text-emerald-400">Halls</span></span>
         </div>
-
-        <div className="flex items-center gap-8">
-          <Link 
-            href="/admin" 
-            className="hidden md:block text-[11px] font-bold uppercase tracking-widest text-slate-400 hover:text-emerald-600 transition-colors"
-          >
-            Admin Login
-          </Link>
-          <Link 
-            href="/admin" 
-            className="md:hidden p-2 text-slate-400"
-          >
-            <ShieldCheck className="w-5 h-5" />
-          </Link>
+        <div className="hidden md:flex gap-8 text-white/80 font-bold text-[10px] uppercase tracking-[0.2em]">
+          {/* Linked to top */}
+          <button onClick={scrollToTop} className="hover:text-emerald-400 transition-colors uppercase">Home</button>
+          <button onClick={scrollToAvailability} className="hover:text-emerald-400 transition-colors uppercase">Availability</button>
         </div>
       </nav>
 
-      {/* HERO SECTION */}
-      <section className="pt-40 pb-24 px-6">
-        <div className="max-w-7xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 rounded-full border border-emerald-100 mb-8">
-            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-[10px] font-black uppercase tracking-widest text-emerald-700">Centralized Campus Resource</span>
-          </div>
-          
-          <h1 className="text-5xl md:text-8xl font-black tracking-tighter uppercase italic leading-[0.9] mb-8 text-slate-900">
-            Premium Seminar <br />
-            <span className="text-emerald-600">Halls & Spaces.</span>
-          </h1>
-          
-          <p className="max-w-2xl mx-auto text-slate-500 text-lg font-medium mb-12 leading-relaxed">
-            The official digital gateway for reserving St. Ann's premier seminar halls and auditoriums. Optimized for departmental efficiency and academic excellence.
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-            <Link 
-              href="/halls" 
-              className="w-full sm:w-auto px-10 py-5 bg-slate-950 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl hover:bg-emerald-600 transition-all flex items-center justify-center gap-3 group"
-            >
-              View Availability <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </div>
+      {/* Hero Section */}
+      <header className="relative h-screen w-full flex items-center px-10 overflow-hidden bg-slate-900">
+        <div 
+          className="absolute inset-0 z-0 bg-cover bg-center"
+          style={{ backgroundImage: `url('https://images.unsplash.com/photo-1492538368677-f6e0afe31dcc?q=80&w=2070&auto=format&fit=crop')` }}
+        >
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px]" />
         </div>
-      </section>
 
-      {/* FEATURES GRID */}
-      <section className="py-24 bg-slate-50">
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-8">
-          {[
-            {
-              icon: Clock,
-              title: "Real-time Scheduling",
-              desc: "Instant visibility into hall availability. No more manual logbooks or scheduling conflicts."
-            },
-            {
-              icon: ShieldCheck,
-              title: "Official Verification",
-              desc: "Secure booking system requiring official campus credentials for all departmental reservations."
-            },
-            {
-              icon: Calendar,
-              title: "Digital Records",
-              desc: "Automated event logs and departmental history for seamless administrative reporting."
-            }
-          ].map((feature, i) => (
-            <div key={i} className="p-10 bg-white border border-slate-100 rounded-[3rem] shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all">
-              <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 mb-8">
-                <feature.icon className="w-6 h-6" />
-              </div>
-              <h3 className="text-xl font-black uppercase italic mb-4">{feature.title}</h3>
-              <p className="text-slate-500 text-sm font-medium leading-relaxed">{feature.desc}</p>
+        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 w-full max-w-7xl mx-auto gap-12 items-center">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-widest mb-6">
+              <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
+              St. Ann's Official Portal
             </div>
-          ))}
-        </div>
-      </section>
-
-      {/* FOOTER */}
-      <footer className="bg-white border-t border-slate-100 pt-20 pb-10 px-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-20">
-            <div className="col-span-1 md:col-span-2">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-8 h-8 bg-slate-950 rounded-lg flex items-center justify-center text-white">
-                  <Building2 className="w-4 h-4" />
-                </div>
-                <span className="text-lg font-black uppercase italic tracking-tighter">St. Ann's College</span>
-              </div>
-              <p className="text-slate-400 text-sm max-w-sm font-medium leading-relaxed">
-                Empowering our departments with modern digital infrastructure for seamless event management and hall coordination.
-              </p>
-            </div>
-            
-            <div>
-              <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-900 mb-6">Contact Portal</h4>
-              <ul className="space-y-4">
-                <li className="flex items-center gap-3 text-slate-500 text-xs font-bold hover:text-emerald-600 transition-colors">
-                  <Mail className="w-4 h-4" /> office@stannscollege.com
-                </li>
-                <li className="flex items-center gap-3 text-slate-500 text-xs font-bold hover:text-emerald-600 transition-colors">
-                  <MapPin className="w-4 h-4" /> Mehdipatnam, Hyderabad
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-900 mb-6">Administrative</h4>
-              <ul className="space-y-4">
-                <li>
-                  <Link href="/admin" className="text-slate-500 text-xs font-bold hover:text-emerald-600 transition-colors uppercase tracking-widest">
-                    Admin Login
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/halls" className="text-slate-500 text-xs font-bold hover:text-emerald-600 transition-colors uppercase tracking-widest">
-                    Hall Directory
-                  </Link>
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="pt-10 border-t border-slate-50 flex flex-col md:flex-row justify-between items-center gap-6">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-              © 2024 St. Ann's College for Women. All Rights Reserved.
+            <h1 className="text-4xl md:text-6xl font-black text-white leading-[1.1] tracking-tighter mb-6 uppercase italic">
+              Book Your <br />
+              <span className="text-emerald-400">Campus Space</span>
+            </h1>
+            <p className="text-base text-slate-300 mb-8 max-w-md font-medium leading-relaxed opacity-80">
+              Check real-time availability of St. Ann's seminar halls and auditorium. Secure your venue for departmental events in seconds.
             </p>
-            <div className="flex items-center gap-6">
-              <Globe className="w-4 h-4 text-slate-300" />
-              <GraduationCap className="w-4 h-4 text-slate-300" />
+            <button 
+              onClick={scrollToAvailability}
+              className="px-7 py-3.5 bg-[#10B981] hover:bg-[#059669] text-white rounded-full font-bold text-xs uppercase tracking-widest flex items-center gap-2 transition-all shadow-xl shadow-emerald-500/30 group"
+            >
+              Explore Halls <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </button>
+          </div>
+
+          <div className="hidden lg:block space-y-3">
+            {halls.map((hall) => (
+              <div key={hall.id} className="bg-white/5 backdrop-blur-xl border border-white/10 p-4 rounded-2xl flex justify-between items-center hover:bg-white/10 transition-all">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
+                    <Building2 className="text-emerald-400 w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-white tracking-tight uppercase italic">{hall.name}</h3>
+                    <p className="text-white/40 text-[10px] font-bold uppercase tracking-wider">Capacity: {hall.capacity}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 text-emerald-400 rounded-lg text-[9px] font-black uppercase border border-emerald-500/10">
+                  Live
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </header>
+
+      {/* Hall Availability Section */}
+      <section id="availability-section" className="py-24 px-10 bg-[#FBFBFE]">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-12">
+            <p className="text-emerald-600 font-black text-[9px] uppercase tracking-[0.5em] mb-3">Campus Venues</p>
+            <h2 className="text-3xl font-black text-slate-900 tracking-tight mb-4 uppercase italic">Hall Availability</h2>
+            <div className="w-12 h-1 bg-emerald-500 mx-auto rounded-full mb-6" />
+            <p className="text-slate-400 max-w-lg mx-auto text-sm font-medium leading-relaxed">
+              Select the ideal location for your next workshop, seminar, or cultural event at St. Ann's.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {halls.map((hall) => (
+              <div key={hall.id} className="bg-white border border-slate-100 rounded-[2.5rem] overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.02)] group hover:shadow-2xl hover:shadow-emerald-500/5 transition-all duration-500">
+                <div className="h-44 bg-slate-100 relative overflow-hidden">
+                  <img 
+                    src="https://images.unsplash.com/photo-1517457373958-b7bdd4587205?q=80&w=2069&auto=format&fit=crop" 
+                    className="w-full h-full object-cover grayscale-[30%] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700" 
+                    alt="hall"
+                  />
+                  <div className="absolute top-4 left-4 flex items-center gap-1.5 px-3 py-1 bg-emerald-500 text-white rounded-full text-[9px] font-black uppercase tracking-wider shadow-lg">
+                    <CheckCircle2 className="w-3 h-3" /> Ready to Book
+                  </div>
+                </div>
+
+                <div className="p-8">
+                  <h3 className="text-xl font-black text-slate-900 mb-4 tracking-tight uppercase italic">{hall.name}</h3>
+                  <div className="flex flex-wrap gap-2 mb-10">
+                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100">
+                      <Users className="w-3.5 h-3.5" /> {hall.capacity} Seats
+                    </div>
+                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100">
+                      <Wifi className="w-3.5 h-3.5" /> High Speed WiFi
+                    </div>
+                  </div>
+                  <Link 
+                    href={`/halls/${hall.id}`} 
+                    className="flex justify-center items-center gap-2 w-full py-4 bg-slate-900 text-white rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-[#10B981] transition-all shadow-xl shadow-slate-100 hover:shadow-emerald-100 active:scale-95"
+                  >
+                    <Calendar className="w-4 h-4" /> Open Calendar
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+     {/* Compact Footer */}
+      <footer className="bg-[#059669] text-white py-10 px-10">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 items-start">
+          
+          {/* Logo Section - Paragraph Removed */}
+          <div className="col-span-1">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm">
+                <Building2 className="text-[#059669] w-5 h-5" />
+              </div>
+              <span className="text-xl font-black tracking-tighter italic uppercase">St. Ann's</span>
             </div>
           </div>
+
+          {/* Navigation */}
+          <div>
+            <h4 className="font-bold text-[10px] uppercase tracking-[0.2em] mb-4 text-white/50">Navigation</h4>
+            <ul className="space-y-2 text-[11px] font-bold uppercase tracking-wide">
+              <li><button onClick={scrollToTop} className="hover:text-emerald-200 transition-colors">Home</button></li>
+              <li><button onClick={scrollToAvailability} className="hover:text-emerald-200 transition-colors text-left">Availability</button></li>
+            </ul>
+          </div>
+
+          {/* Campus Spaces */}
+          <div>
+            <h4 className="font-bold text-[10px] uppercase tracking-[0.2em] mb-4 text-white/50">Campus Spaces</h4>
+            <ul className="space-y-2 text-[11px] font-bold uppercase tracking-wide">
+              {halls.map(hall => (
+                <li key={hall.id} className="text-emerald-50 italic">{hall.name}</li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Contact Office */}
+          <div>
+            <h4 className="font-bold text-[10px] uppercase tracking-[0.2em] mb-4 text-white/50">Contact Office</h4>
+            <ul className="space-y-3 text-[11px] font-bold uppercase tracking-wide">
+              <li>
+                <a href="mailto:info@stannscollegehyd.com" className="flex items-center gap-2 text-emerald-50 hover:text-white transition-colors group">
+                  <Mail className="w-3.5 h-3.5 text-emerald-200" /> 
+                  info@stannscollegehyd.com
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="https://www.google.com/maps?ll=17.39332,78.437838&z=15&t=m&hl=en&gl=IN&mapclient=embed&cid=3230818851375227641" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="flex items-center gap-2 text-emerald-50 hover:text-white transition-colors group"
+                >
+                  <MapPin className="w-3.5 h-3.5 text-emerald-200" /> 
+                  Mehdipatnam, Hyd
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+        
+        {/* Bottom Bar */}
+        <div className="max-w-7xl mx-auto mt-10 pt-6 border-t border-white/10 flex justify-between items-center text-[9px] font-black uppercase tracking-[0.2em] text-emerald-200/60">
+          <p>© 2026 St. Ann's College Booking Portal</p>
+          <p className="hidden md:block italic">Direct. Digital. Departmental.</p>
         </div>
       </footer>
     </div>
