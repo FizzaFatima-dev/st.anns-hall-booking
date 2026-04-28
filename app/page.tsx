@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import { Building2, Users, ArrowRight, MapPin, Plus, Instagram, Facebook, Twitter, Mail } from 'lucide-react';
+import { Building2, Users, ArrowRight, MapPin, Plus, Mail } from 'lucide-react';
 
 export default function Home() {
   const [halls, setHalls] = useState<any[]>([]);
@@ -128,11 +128,7 @@ export default function Home() {
 
             <div>
               <h4 className="text-xs font-black uppercase tracking-widest text-white mb-6">Contact</h4>
-              <div className="flex gap-4 mb-4">
-                <Instagram className="w-5 h-5 text-slate-500 hover:text-white cursor-pointer" />
-                <Facebook className="w-5 h-5 text-slate-500 hover:text-white cursor-pointer" />
-                <Twitter className="w-5 h-5 text-slate-500 hover:text-white cursor-pointer" />
-              </div>
+              
               <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">© 2024 St. Ann's College</p>
             </div>
           </div>
