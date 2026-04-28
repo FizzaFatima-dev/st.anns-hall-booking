@@ -9,7 +9,7 @@ import {
 } from 'date-fns';
 import { 
   ChevronLeft, ChevronRight, Building2, Calendar as LucideCalendar, 
-  CheckCircle2, Clock, ArrowLeft, ShieldCheck, Sparkles, X, Plus, Info
+  CheckCircle2, Clock, ArrowLeft, ShieldCheck, Sparkles, X, Plus, Info, Zap
 } from 'lucide-react';
 
 export default function BookingPage() {
@@ -65,7 +65,7 @@ export default function BookingPage() {
     const { error: otpError } = await supabase.auth.verifyOtp({
       email: formData.email,
       token: otpCode,
-      type: 'email' // Changed to 'email' for better compatibility
+      type: 'email'
     });
 
     if (otpError) {
@@ -91,17 +91,18 @@ export default function BookingPage() {
     else toast.error("Error: " + bookingError.message);
   };
 
-  if (!hall) return <div className="h-screen flex items-center justify-center font-black animate-pulse text-emerald-500 uppercase tracking-widest italic">Loading Portal...</div>;
+  if (!hall) return <div className="h-screen bg-[#020617] flex items-center justify-center font-black animate-pulse text-emerald-500 uppercase tracking-widest italic">Loading Portal...</div>;
 
   if (isSuccess) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center p-6">
-        <div className="max-w-md w-full text-center">
-          <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-8 border border-emerald-100 shadow-sm">
-            <CheckCircle2 className="w-10 h-10 text-emerald-600" />
+      <div className="min-h-screen bg-[#020617] flex items-center justify-center p-6 text-white">
+        <div className="max-w-md w-full text-center space-y-8">
+          <div className="w-24 h-24 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto border border-emerald-500/20 shadow-[0_0_50px_rgba(16,185,129,0.1)]">
+            <CheckCircle2 className="w-12 h-12 text-emerald-500" />
           </div>
-          <h2 className="text-3xl font-black uppercase italic tracking-tighter text-slate-900 mb-4">Confirmed!</h2>
-          <button onClick={() => window.location.reload()} className="w-full py-5 bg-slate-950 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl hover:bg-emerald-600 transition-all">Back to Home</button>
+          <h2 className="text-4xl font-black uppercase italic tracking-tighter">Booking Confirmed</h2>
+          <p className="text-slate-400 font-medium uppercase text-[10px] tracking-[0.2em]">Check your email for digital confirmation.</p>
+          <button onClick={() => router.push('/')} className="w-full py-5 bg-emerald-500 text-slate-950 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl hover:bg-emerald-400 transition-all active:scale-95">Back to Home Portal</button>
         </div>
       </div>
     );
@@ -115,51 +116,55 @@ export default function BookingPage() {
   const todayDate = startOfDay(new Date());
 
   return (
-    <div className="min-h-screen bg-[#FDFDFD] font-sans selection:bg-emerald-100">
+    <div className="min-h-screen bg-[#020617] font-sans text-slate-200">
       <Toaster position="top-center" />
       
-      <nav className="bg-white/90 backdrop-blur-md border-b border-slate-100 px-8 py-5 sticky top-0 z-50 flex justify-between items-center">
+      {/* Navigation */}
+      <nav className="fixed top-0 w-full z-50 bg-[#020617]/80 backdrop-blur-md border-b border-white/5 px-6 md:px-10 py-5 flex justify-between items-center">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-slate-950 rounded-xl flex items-center justify-center text-white shadow-lg"><Building2 className="w-5 h-5" /></div>
-          <span className="text-xl font-black tracking-tighter uppercase italic">St. Ann's</span>
+          <div className="w-9 h-9 bg-emerald-500 rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.2)]">
+            <Building2 className="text-slate-950 w-5 h-5" />
+          </div>
+          <span className="text-xl font-black tracking-tighter text-white uppercase italic">St. Ann's</span>
         </div>
+        <div className="hidden md:block text-[10px] font-black uppercase tracking-[0.3em] text-emerald-500/50 italic">Secure Resource Booking</div>
       </nav>
 
-      <div className="max-w-7xl mx-auto px-6 py-12">
+      <div className="max-w-7xl mx-auto px-6 pt-32 pb-20">
         {!isRegistering ? (
           <>
-            <div className="mb-10">
-              <button onClick={() => router.push('/')} className="flex items-center gap-2 text-slate-400 hover:text-emerald-600 mb-6 font-bold text-[10px] uppercase tracking-widest transition-all group">
-                <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back to Halls
-              </button>
-              
-              <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-                <div>
-                  <h1 className="text-4xl md:text-6xl font-black text-slate-950 tracking-tighter uppercase italic leading-none">{hall.name}</h1>
-                  {/* LEGEND RESTORED HERE */}
-                  <div className="flex items-center gap-6 mt-6">
-                    <div className="flex items-center gap-2 font-bold text-[10px] uppercase tracking-widest text-slate-400">
-                      <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50" /> Available
-                    </div>
-                    <div className="flex items-center gap-2 font-bold text-[10px] uppercase tracking-widest text-slate-400">
-                      <div className="w-2 h-2 rounded-full bg-rose-500" /> Booked
-                    </div>
+            <div className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-8">
+              <div>
+                <button onClick={() => router.push('/')} className="flex items-center gap-2 text-slate-500 hover:text-emerald-400 mb-6 font-bold text-[11px] uppercase tracking-widest transition-all group">
+                  <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Browse All Halls
+                </button>
+                <h1 className="text-5xl md:text-7xl font-black text-white tracking-tighter uppercase italic leading-none">{hall.name}</h1>
+                <div className="flex items-center gap-6 mt-8">
+                  <div className="flex items-center gap-3 font-bold text-[10px] uppercase tracking-widest text-slate-400">
+                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_10px_#10B981]" /> Available Slots
+                  </div>
+                  <div className="flex items-center gap-3 font-bold text-[10px] uppercase tracking-widest text-slate-400">
+                    <div className="w-2.5 h-2.5 rounded-full bg-rose-600/50" /> Reserved
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-[3rem] shadow-sm border border-slate-100 overflow-hidden mb-16 ring-1 ring-slate-100">
-              <div className="p-8 md:p-10 flex flex-col md:flex-row justify-between items-center gap-6 border-b border-slate-50">
-                <h2 className="text-2xl font-black uppercase italic tracking-tighter">{format(currentDate, 'MMMM yyyy')}</h2>
-                <div className="flex items-center gap-2 bg-slate-50 p-1.5 rounded-2xl border border-slate-100">
-                  <button onClick={() => setCurrentDate(subMonths(currentDate, 1))} className="p-3 hover:bg-white rounded-xl transition-all shadow-sm"><ChevronLeft className="w-5 h-5 text-slate-400" /></button>
-                  <button onClick={() => setCurrentDate(new Date())} className="px-8 py-3 bg-white text-slate-900 shadow-sm rounded-xl font-bold text-[10px] uppercase tracking-[0.2em]">Today</button>
-                  <button onClick={() => setCurrentDate(addMonths(currentDate, 1))} className="p-3 hover:bg-white rounded-xl transition-all shadow-sm"><ChevronRight className="w-5 h-5 text-slate-400" /></button>
+            {/* Calendar Container */}
+            <div className="bg-slate-900/40 backdrop-blur-xl rounded-[2.5rem] border border-white/5 overflow-hidden mb-16 shadow-2xl">
+              <div className="p-8 md:p-10 flex flex-col md:flex-row justify-between items-center gap-6 border-b border-white/5">
+                <h2 className="text-2xl font-black uppercase italic tracking-tighter text-white flex items-center gap-4">
+                  <LucideCalendar className="text-emerald-500 w-6 h-6" />
+                  {format(currentDate, 'MMMM yyyy')}
+                </h2>
+                <div className="flex items-center gap-2 bg-slate-950 p-2 rounded-2xl border border-white/5">
+                  <button onClick={() => setCurrentDate(subMonths(currentDate, 1))} className="p-3 hover:bg-white/5 rounded-xl transition-all"><ChevronLeft className="w-5 h-5 text-slate-400" /></button>
+                  <button onClick={() => setCurrentDate(new Date())} className="px-8 py-3 bg-white text-slate-950 rounded-xl font-bold text-[10px] uppercase tracking-[0.2em] hover:bg-emerald-400 transition-colors">Today</button>
+                  <button onClick={() => setCurrentDate(addMonths(currentDate, 1))} className="p-3 hover:bg-white/5 rounded-xl transition-all"><ChevronRight className="w-5 h-5 text-slate-400" /></button>
                 </div>
               </div>
 
-              <div className="grid grid-cols-7 bg-slate-50/30 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] py-6 border-b border-slate-50 text-center">
+              <div className="grid grid-cols-7 bg-slate-950 text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] py-5 border-b border-white/5 text-center">
                 {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => <div key={day}>{day}</div>)}
               </div>
 
@@ -174,23 +179,23 @@ export default function BookingPage() {
                     <div 
                       key={idx} 
                       onClick={() => { if (isCurrentMonth && !isPast) { setSelectedDate(day); setIsPopupOpen(true); } }}
-                      className={`min-h-[140px] md:min-h-[170px] p-6 border-b border-r border-slate-50 transition-all group relative cursor-pointer
-                        ${!isCurrentMonth || isPast ? 'bg-slate-50/20 opacity-20 cursor-not-allowed' : 'hover:bg-emerald-50/30'}
-                        ${isToday ? 'bg-emerald-50/40' : ''}`}
+                      className={`min-h-[140px] md:min-h-[160px] p-6 border-b border-r border-white/5 transition-all group relative cursor-pointer
+                        ${!isCurrentMonth || isPast ? 'bg-slate-950/40 opacity-20 cursor-not-allowed' : 'hover:bg-emerald-500/5'}
+                        ${isToday ? 'bg-emerald-500/10' : ''}`}
                     >
                       <span className={`text-base font-black w-10 h-10 flex items-center justify-center rounded-xl mb-4 transition-all
-                        ${isToday ? 'bg-slate-950 text-white shadow-xl scale-110' : isCurrentMonth ? 'text-slate-900' : 'text-slate-300'}`}>
+                        ${isToday ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20' : isCurrentMonth ? 'text-white' : 'text-slate-700'}`}>
                         {format(day, 'd')}
                       </span>
                       
                       <div className="flex flex-wrap gap-1.5">
                         {dayBookings.map((_, i) => (
-                          <div key={i} className="w-2 h-2 rounded-full bg-rose-500 shadow-sm ring-2 ring-white" />
+                          <div key={i} className="w-2.5 h-2.5 rounded-full bg-rose-600 shadow-[0_0_8px_rgba(225,29,72,0.4)]" />
                         ))}
                       </div>
 
                       {isCurrentMonth && !isPast && (
-                        <div className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-all bg-emerald-500 text-white p-1 rounded-lg shadow-lg scale-75 group-hover:scale-100">
+                        <div className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-all bg-emerald-500 text-slate-950 p-1 rounded-lg scale-75 group-hover:scale-100">
                           <Plus className="w-4 h-4" />
                         </div>
                       )}
@@ -200,89 +205,88 @@ export default function BookingPage() {
               </div>
             </div>
 
-            {/* INSTRUCTION BOX - RESTORED AND IMPROVED */}
-            <div className="max-w-4xl mx-auto bg-slate-950 rounded-[3rem] p-12 text-white relative overflow-hidden shadow-2xl">
-               <div className="absolute top-0 right-0 p-8 opacity-10"><Sparkles className="w-24 h-24" /></div>
-               <div className="relative z-10">
-                  <div className="flex items-center gap-3 mb-8">
-                    <div className="w-10 h-10 bg-emerald-500 rounded-2xl flex items-center justify-center"><Info className="w-5 h-5 text-white" /></div>
-                    <h3 className="text-xl font-black uppercase italic tracking-widest">Booking Instructions</h3>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-                      <div className="flex gap-5">
-                        <span className="text-3xl font-black text-emerald-500 italic">01</span>
-                        <div>
-                          <p className="text-[11px] font-black uppercase tracking-[0.2em] mb-2 text-emerald-400">Select Date</p>
-                          <p className="text-xs font-medium text-slate-400 leading-relaxed">Click on any available date to view current timings and agendas.</p>
-                        </div>
-                      </div>
-                      <div className="flex gap-5">
-                        <span className="text-3xl font-black text-emerald-500 italic">02</span>
-                        <div>
-                          <p className="text-[11px] font-black uppercase tracking-[0.2em] mb-2 text-emerald-400">Event Details</p>
-                          <p className="text-xs font-medium text-slate-400 leading-relaxed">Input your departmental details and specify your required time slot.</p>
-                        </div>
-                      </div>
-                      <div className="flex gap-5">
-                        <span className="text-3xl font-black text-emerald-500 italic">03</span>
-                        <div>
-                          <p className="text-[11px] font-black uppercase tracking-[0.2em] mb-2 text-emerald-400">Verification</p>
-                          <p className="text-xs font-medium text-slate-400 leading-relaxed">Secure your slot instantly by verifying your official campus email.</p>
-                        </div>
-                      </div>
-                  </div>
-               </div>
+            {/* Instruction Panel */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+               {[
+                 { step: '01', title: 'Pick a Date', desc: 'Identify an open slot in the calendar marked by the green indicator.', icon: LucideCalendar },
+                 { step: '02', title: 'Input Data', desc: 'Provide event specifics and your departmental identification for the record.', icon: Sparkles },
+                 { step: '03', title: 'Verify OTP', desc: 'Authorize the booking through your official campus email verification code.', icon: ShieldCheck },
+               ].map((item, i) => (
+                 <div key={i} className="p-8 bg-slate-900/30 border border-white/5 rounded-3xl group hover:border-emerald-500/30 transition-all">
+                    <div className="flex justify-between items-start mb-6">
+                      <span className="text-4xl font-black text-emerald-500/20 italic group-hover:text-emerald-500 transition-colors">{item.step}</span>
+                      <item.icon className="w-5 h-5 text-slate-600 group-hover:text-emerald-500" />
+                    </div>
+                    <h3 className="text-sm font-black uppercase tracking-widest text-white mb-2 italic">{item.title}</h3>
+                    <p className="text-xs font-medium text-slate-500 leading-relaxed">{item.desc}</p>
+                 </div>
+               ))}
             </div>
           </>
         ) : (
-          /* REGISTRATION FORM (Only shows when isRegistering is true) */
-          <div className="max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-             <button onClick={() => { setIsRegistering(false); setIsVerifying(false); }} className="flex items-center gap-2 text-slate-400 hover:text-emerald-600 mb-8 font-bold text-[10px] uppercase tracking-widest transition-all">
-                <ArrowLeft className="w-4 h-4" /> Back to Calendar
+          /* REGISTRATION FORM */
+          <div className="max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-8 duration-500">
+             <button onClick={() => { setIsRegistering(false); setIsVerifying(false); }} className="flex items-center gap-2 text-slate-500 hover:text-emerald-400 mb-8 font-bold text-[11px] uppercase tracking-widest transition-all">
+                <ArrowLeft className="w-4 h-4" /> Return to Calendar
              </button>
-             <div className="bg-white rounded-[3rem] shadow-2xl border border-slate-100 overflow-hidden ring-1 ring-slate-100">
-                <div className="bg-slate-950 p-10 md:p-14 text-white flex flex-col md:flex-row justify-between items-center gap-8">
+             <div className="bg-slate-900 border border-white/10 rounded-[2.5rem] overflow-hidden shadow-2xl">
+                <div className="bg-emerald-500 p-10 md:p-12 flex flex-col md:flex-row justify-between items-center gap-8">
                     <div className="flex items-center gap-6">
-                      <div className="w-16 h-16 bg-emerald-500 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/20"><Building2 className="text-white w-8 h-8" /></div>
+                      <div className="w-16 h-16 bg-slate-950 rounded-2xl flex items-center justify-center shadow-xl"><Building2 className="text-emerald-500 w-8 h-8" /></div>
                       <div>
-                        <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight uppercase italic">{hall.name}</h2>
-                        <p className="text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em]">Official Slot Registration</p>
+                        <h2 className="text-2xl md:text-3xl font-black text-slate-950 uppercase italic tracking-tight">{hall.name}</h2>
+                        <p className="text-emerald-950/60 text-[10px] font-black uppercase tracking-[0.2em]">Form 24-B / Official Slot Registration</p>
                       </div>
                     </div>
-                    <div className="bg-white/5 px-6 py-3 rounded-2xl border border-white/10 flex items-center gap-3 text-sm font-bold">
-                      <LucideCalendar className="w-4 h-4 text-emerald-400" />
+                    <div className="bg-slate-950/20 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/10 flex items-center gap-3 text-sm font-bold text-slate-950">
+                      <LucideCalendar className="w-4 h-4" />
                       <span className="uppercase tracking-widest">{format(selectedDate!, 'EEEE, MMMM do')}</span>
                     </div>
                 </div>
                 <div className="p-10 md:p-16">
                    {!isVerifying ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
-                      <input type="text" placeholder="FULL NAME *" value={formData.fullName} onChange={e => setFormData({...formData, fullName: e.target.value})} className="border-b border-slate-200 py-4 font-bold text-base outline-none focus:border-emerald-500 uppercase transition-all" />
-                      <input type="email" placeholder="EMAIL ADDRESS *" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="border-b border-slate-200 py-4 font-bold text-base outline-none focus:border-emerald-500 transition-all" />
-                      <input type="text" placeholder="DEPARTMENT *" value={formData.dept} onChange={e => setFormData({...formData, dept: e.target.value})} className="border-b border-slate-200 py-4 font-bold text-base outline-none focus:border-emerald-500 uppercase transition-all" />
-                      <input type="text" placeholder="EVENT NAME *" value={formData.eventName} onChange={e => setFormData({...formData, eventName: e.target.value})} className="border-b border-slate-200 py-4 font-bold text-base outline-none focus:border-emerald-500 uppercase transition-all" />
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Start Time</label>
-                        <input type="time" value={formData.startTime} onChange={e => setFormData({...formData, startTime: e.target.value})} className="border-b border-slate-200 py-4 font-bold text-base w-full outline-none focus:border-emerald-500" />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-12">
+                      {[
+                        { label: 'FULL NAME *', key: 'fullName' },
+                        { label: 'EMAIL ADDRESS *', key: 'email', type: 'email' },
+                        { label: 'DEPARTMENT *', key: 'dept' },
+                        { label: 'EVENT NAME *', key: 'eventName' }
+                      ].map((field) => (
+                        <div key={field.key} className="relative group">
+                          <input 
+                            type={field.type || 'text'} 
+                            placeholder={field.label}
+                            value={formData[field.key as keyof typeof formData]} 
+                            onChange={e => setFormData({...formData, [field.key]: e.target.value})} 
+                            className="w-full bg-transparent border-b border-slate-800 py-4 font-bold text-base outline-none focus:border-emerald-500 uppercase transition-all placeholder:text-slate-700 text-white" 
+                          />
+                          <div className="absolute bottom-0 left-0 h-[1px] w-0 bg-emerald-500 group-focus-within:w-full transition-all duration-500" />
+                        </div>
+                      ))}
+                      
+                      <div className="space-y-3">
+                        <label className="text-[10px] font-black text-emerald-500 uppercase tracking-widest italic">Start Time</label>
+                        <input type="time" value={formData.startTime} onChange={e => setFormData({...formData, startTime: e.target.value})} className="w-full bg-slate-950 border border-white/5 p-4 rounded-xl font-bold text-white outline-none focus:border-emerald-500 transition-all" />
                       </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">End Time</label>
-                        <input type="time" value={formData.endTime} onChange={e => setFormData({...formData, endTime: e.target.value})} className="border-b border-slate-200 py-4 font-bold text-base w-full outline-none focus:border-emerald-500" />
+                      <div className="space-y-3">
+                        <label className="text-[10px] font-black text-emerald-500 uppercase tracking-widest italic">End Time</label>
+                        <input type="time" value={formData.endTime} onChange={e => setFormData({...formData, endTime: e.target.value})} className="w-full bg-slate-950 border border-white/5 p-4 rounded-xl font-bold text-white outline-none focus:border-emerald-500 transition-all" />
                       </div>
-                      <button onClick={handleSendOTP} disabled={loading} className="col-span-full mt-6 py-6 bg-slate-950 text-white rounded-2xl font-bold text-xs uppercase tracking-widest shadow-2xl hover:bg-emerald-600 transition-all">
-                        {loading ? 'Sending Code...' : 'Verify Identity & Book'}
+                      <button onClick={handleSendOTP} disabled={loading} className="col-span-full mt-10 py-6 bg-emerald-500 text-slate-950 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl hover:bg-emerald-400 transition-all active:scale-[0.98]">
+                        {loading ? 'Processing System...' : 'Request Verification Code'}
                       </button>
                     </div>
                    ) : (
-                    <div className="max-w-md mx-auto text-center space-y-10 py-10">
-                        <ShieldCheck className="w-14 h-14 text-emerald-600 mx-auto" />
-                        <div>
-                          <h3 className="text-2xl font-black uppercase italic text-slate-900 tracking-tight">Verify Email</h3>
-                          <p className="text-slate-400 text-[10px] font-bold uppercase mt-2 tracking-widest">Sent to {formData.email}</p>
+                    <div className="max-w-md mx-auto text-center space-y-12 py-10">
+                        <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto border border-emerald-500/20">
+                          <ShieldCheck className="w-10 h-10 text-emerald-500" />
                         </div>
-                        <input type="text" maxLength={6} placeholder="000000" value={otpCode} onChange={e => setOtpCode(e.target.value)} className="w-full text-center text-5xl font-black tracking-[0.3em] border-b-4 border-emerald-500 outline-none text-slate-900" />
-                        <button onClick={handleVerifyAndBook} disabled={loading} className="w-full py-6 bg-emerald-600 text-white rounded-2xl font-bold uppercase tracking-widest shadow-xl hover:bg-emerald-700 transition-all">Confirm Booking</button>
+                        <div>
+                          <h3 className="text-3xl font-black uppercase italic text-white tracking-tight">Security Check</h3>
+                          <p className="text-slate-500 text-[10px] font-bold uppercase mt-3 tracking-[0.2em]">Verification code dispatched to {formData.email}</p>
+                        </div>
+                        <input type="text" maxLength={6} placeholder="000000" value={otpCode} onChange={e => setOtpCode(e.target.value)} className="w-full bg-transparent text-center text-6xl font-black tracking-[0.4em] border-b-2 border-emerald-500/30 focus:border-emerald-500 outline-none text-white transition-all" />
+                        <button onClick={handleVerifyAndBook} disabled={loading} className="w-full py-6 bg-emerald-500 text-slate-950 rounded-2xl font-black uppercase tracking-widest shadow-xl hover:bg-emerald-400 transition-all">Confirm Formal Booking</button>
                     </div>
                    )}
                 </div>
@@ -291,47 +295,47 @@ export default function BookingPage() {
         )}
       </div>
 
-      {/* DAILY AGENDA POPUP */}
+      {/* DAILY AGENDA MODAL */}
       {isPopupOpen && selectedDate && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" onClick={() => setIsPopupOpen(false)} />
-          <div className="relative w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in duration-300">
-            <div className="bg-slate-950 p-8 text-white flex justify-between items-center">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-6">
+          <div className="absolute inset-0 bg-[#020617]/95 backdrop-blur-xl" onClick={() => setIsPopupOpen(false)} />
+          <div className="relative w-full max-w-md bg-slate-900 border border-white/10 rounded-[3rem] shadow-2xl overflow-hidden animate-in zoom-in duration-300">
+            <div className="bg-slate-950 p-8 text-white flex justify-between items-center border-b border-white/5">
               <div>
-                <h3 className="text-xl font-black uppercase italic tracking-tighter">Daily Agenda</h3>
-                <p className="text-emerald-400 text-[10px] font-black uppercase tracking-[0.2em]">{format(selectedDate, 'EEEE, MMMM do')}</p>
+                <h3 className="text-xl font-black uppercase italic tracking-tighter">Day Overview</h3>
+                <p className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.2em]">{format(selectedDate, 'EEEE, MMMM do')}</p>
               </div>
-              <button onClick={() => setIsPopupOpen(false)} className="p-2.5 bg-white/10 rounded-full hover:bg-white/20 transition-colors">
+              <button onClick={() => setIsPopupOpen(false)} className="p-3 bg-white/5 rounded-full hover:bg-white/10 transition-colors">
                 <X className="w-4 h-4" />
               </button>
             </div>
             <div className="p-10">
-              <div className="space-y-4 max-h-[300px] overflow-y-auto mb-10 pr-2 custom-scrollbar">
+              <div className="space-y-4 max-h-[300px] overflow-y-auto mb-10 pr-2">
                 {bookings.filter(b => isSameDay(new Date(b.booking_date), selectedDate)).length > 0 ? (
                   bookings.filter(b => isSameDay(new Date(b.booking_date), selectedDate)).map((b, i) => (
-                    <div key={i} className="flex items-center justify-between p-5 bg-rose-50/50 rounded-2xl border border-rose-100">
+                    <div key={i} className="flex items-center justify-between p-6 bg-white/5 rounded-2xl border border-white/5 group hover:border-emerald-500/20 transition-all">
                       <div>
-                        <p className="text-xs font-black text-slate-950 uppercase italic mb-1">{b.event_name}</p>
-                        <p className="text-[9px] font-bold text-rose-500 uppercase tracking-widest">{b.department}</p>
+                        <p className="text-[11px] font-black text-white uppercase italic mb-1">{b.event_name}</p>
+                        <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">{b.department}</p>
                       </div>
-                      <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-rose-100 shadow-sm">
-                        <Clock className="w-3.5 h-3.5 text-rose-500" />
-                        <span className="text-[10px] font-black text-slate-900 tracking-tighter">{b.start_time} - {b.end_time}</span>
+                      <div className="flex items-center gap-3 bg-slate-950 px-4 py-2 rounded-xl border border-white/5">
+                        <Clock className="w-3.5 h-3.5 text-emerald-500" />
+                        <span className="text-[10px] font-black text-white tracking-tighter">{b.start_time} - {b.end_time}</span>
                       </div>
                     </div>
                   ))
                 ) : (
-                  <div className="text-center py-10">
-                    <LucideCalendar className="w-10 h-10 mx-auto mb-4 text-slate-200" />
-                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">No events scheduled</p>
+                  <div className="text-center py-12">
+                    <Zap className="w-12 h-12 mx-auto mb-4 text-slate-800" />
+                    <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em]">No Reserved Slots</p>
                   </div>
                 )}
               </div>
               <button 
                 onClick={() => { setIsPopupOpen(false); setIsRegistering(true); }}
-                className="w-full py-5 bg-emerald-600 text-white rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] shadow-xl hover:bg-emerald-700 transition-all flex items-center justify-center gap-3"
+                className="w-full py-5 bg-emerald-500 text-slate-950 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:bg-emerald-400 transition-all flex items-center justify-center gap-3 active:scale-95"
               >
-                <Plus className="w-4 h-4" /> Book New Slot
+                <Plus className="w-4 h-4" /> Reserve New Slot
               </button>
             </div>
           </div>
