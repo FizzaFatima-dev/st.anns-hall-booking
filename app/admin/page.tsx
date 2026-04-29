@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { 
-  Trash2, Calendar, Clock, BarChart3, Shield, Search, Download, Eye, EyeOff, Lock
+  Trash2, Calendar, Clock, BarChart3, Shield, Search, Download, Eye, EyeOff, Lock, X
 } from 'lucide-react';
 
 export default function AdminPortal() {
@@ -13,17 +13,19 @@ export default function AdminPortal() {
   const [password, setPassword] = useState('');
   const [stats, setStats] = useState({ total: 0, today: 0 });
 
-  // Replace the hardcoded string with this
-const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
+  const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
+
   useEffect(() => {
     if (isAuthorized) fetchData();
   }, [isAuthorized]);
 
   async function fetchData() {
+    // UPDATED: Sorting by date (descending) and then start_time (ascending)
     const { data } = await supabase
       .from('bookings')
       .select('*, halls(name)')
-      .order('booking_date', { ascending: false });
+      .order('booking_date', { ascending: false })
+      .order('start_time', { ascending: true });
     
     if (data) {
       setBookings(data);
@@ -49,6 +51,12 @@ const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
     }
   };
 
+  // UPDATED: Interactive Card Filter logic
+  const handleTodayFilter = () => {
+    const today = new Date().toISOString().split('T')[0];
+    setSearchTerm(today);
+  };
+
   const filteredBookings = bookings.filter(b => {
     const today = new Date().toISOString().split('T')[0];
     const isPast = b.booking_date < today;
@@ -56,9 +64,9 @@ const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
     const matchesSearch = 
       b.event_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       b.department?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      b.user_name?.toLowerCase().includes(searchTerm.toLowerCase());
+      b.user_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      b.booking_date?.includes(searchTerm); // Allows filtering by date string
 
-    // Filter out past events unless toggle is ON
     if (!showPastEvents && isPast) return false;
     return matchesSearch;
   });
@@ -103,18 +111,26 @@ const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
         </div>
 
         <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
-          {/* SEARCH */}
+          {/* SEARCH BAR WITH CLEAR BUTTON */}
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
             <input 
               type="text" 
               placeholder="Filter database..." 
-              className="w-full bg-slate-800/50 border border-slate-700 rounded-2xl py-3 pl-12 pr-4 text-sm focus:border-emerald-500 outline-none transition-all text-white"
+              className="w-full bg-slate-800/50 border border-slate-700 rounded-2xl py-3 pl-12 pr-10 text-sm focus:border-emerald-500 outline-none transition-all text-white"
+              value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
+            {searchTerm && (
+              <button 
+                onClick={() => setSearchTerm('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
+              >
+                <X size={14} />
+              </button>
+            )}
           </div>
 
-          {/* TOGGLE HISTORY */}
           <button 
             onClick={() => setShowPastEvents(!showPastEvents)}
             className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all border ${
@@ -131,20 +147,33 @@ const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
         </div>
       </div>
 
-      {/* STATS */}
+      {/* STATS CARDS (UPDATED TO BE INTERACTIVE) */}
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 print:hidden">
-        <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 border border-slate-800 p-6 rounded-[2rem] flex items-center gap-6">
-          <div className="bg-emerald-500/20 p-4 rounded-2xl text-emerald-500"><BarChart3 size={24} /></div>
+        <div 
+          onClick={() => setSearchTerm('')}
+          className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 border border-slate-800 p-6 rounded-[2rem] flex items-center gap-6 cursor-pointer hover:border-emerald-500/50 transition-all active:scale-95 group"
+        >
+          <div className="bg-emerald-500/20 p-4 rounded-2xl text-emerald-500 group-hover:bg-emerald-500 group-hover:text-white transition-all">
+            <BarChart3 size={24} />
+          </div>
           <div>
             <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">Total Database Records</p>
             <h3 className="text-3xl font-black text-white">{stats.total}</h3>
+            <p className="text-[9px] text-emerald-500 font-bold uppercase mt-1 opacity-0 group-hover:opacity-100 transition-opacity">View All</p>
           </div>
         </div>
-        <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 border border-slate-800 p-6 rounded-[2rem] flex items-center gap-6">
-          <div className="bg-blue-500/20 p-4 rounded-2xl text-blue-500"><Calendar size={24} /></div>
+
+        <div 
+          onClick={handleTodayFilter}
+          className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 border border-slate-800 p-6 rounded-[2rem] flex items-center gap-6 cursor-pointer hover:border-blue-500/50 transition-all active:scale-95 group"
+        >
+          <div className="bg-blue-500/20 p-4 rounded-2xl text-blue-500 group-hover:bg-blue-500 group-hover:text-white transition-all">
+            <Calendar size={24} />
+          </div>
           <div>
             <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">Active for Today</p>
             <h3 className="text-3xl font-black text-white">{stats.today}</h3>
+            <p className="text-[9px] text-blue-500 font-bold uppercase mt-1 opacity-0 group-hover:opacity-100 transition-opacity">Filter Today</p>
           </div>
         </div>
       </div>
@@ -164,9 +193,16 @@ const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
             </thead>
             <tbody className="divide-y divide-slate-800/50">
               {filteredBookings.map((b) => {
-                const isPast = b.booking_date < new Date().toISOString().split('T')[0];
+                const todayStr = new Date().toISOString().split('T')[0];
+                const isPast = b.booking_date < todayStr;
+                const isToday = b.booking_date === todayStr;
+
                 return (
-                  <tr key={b.id} className={`transition-colors ${isPast ? 'opacity-40 grayscale-[0.5]' : 'hover:bg-white/[0.02]'}`}>
+                  <tr key={b.id} className={`transition-colors ${
+                    isPast ? 'opacity-40 grayscale-[0.5]' : 
+                    isToday ? 'bg-emerald-500/5 border-l-2 border-emerald-500' : 
+                    'hover:bg-white/[0.02]'
+                  }`}>
                     <td className="p-6">
                       <p className="text-white font-bold uppercase italic text-sm">{b.event_name}</p>
                       <p className="text-emerald-500 font-black text-[9px] uppercase tracking-tighter">{b.halls?.name}</p>
@@ -174,6 +210,7 @@ const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
                     <td className="p-6">
                       <div className="flex items-center gap-2 text-slate-300 text-xs font-bold">
                         <Calendar size={12} className="text-emerald-500/50"/> {b.booking_date}
+                        {isToday && <span className="ml-2 text-[8px] bg-emerald-500 text-white px-1 rounded tracking-tighter">TODAY</span>}
                       </div>
                       <div className="flex items-center gap-2 text-slate-500 text-[10px] mt-1 uppercase">
                         <Clock size={10}/> {b.start_time} - {b.end_time}
