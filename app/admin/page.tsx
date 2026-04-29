@@ -2,12 +2,13 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { 
-  Trash2, Calendar, Clock, Shield, Search, Download, Eye, EyeOff, Lock, X, Filter
+  Trash2, Calendar, Clock, Shield, Search, Download, Eye, EyeOff, Lock, X, Filter, Building2
 } from 'lucide-react';
 
 export default function AdminPortal() {
   const [bookings, setBookings] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterHall, setFilterHall] = useState('All');
   const [showPastEvents, setShowPastEvents] = useState(false);
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [password, setPassword] = useState('');
@@ -19,6 +20,7 @@ export default function AdminPortal() {
   }, [isAuthorized]);
 
   async function fetchData() {
+    // Sort by Date (Nearest first) and then Start Time
     const { data } = await supabase
       .from('bookings')
       .select('*, halls(name)')
@@ -44,19 +46,27 @@ export default function AdminPortal() {
   const filteredBookings = bookings.filter(b => {
     const today = new Date().toISOString().split('T')[0];
     const isPast = b.booking_date < today;
+    
     const matchesSearch = 
       b.event_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       b.department?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       b.user_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       b.booking_date?.includes(searchTerm);
 
+    const matchesHall = filterHall === 'All' || b.halls?.name === filterHall;
+
     if (!showPastEvents && isPast) return false;
-    return matchesSearch;
+    return matchesSearch && matchesHall;
   });
+
+  const resetFilters = () => {
+    setSearchTerm('');
+    setFilterHall('All');
+  };
 
   if (!isAuthorized) {
     return (
-      <div className="min-h-screen bg-[#0F172A] flex items-center justify-center p-6">
+      <div className="min-h-screen bg-[#0F172A] flex items-center justify-center p-6 font-sans">
         <form onSubmit={handleLogin} className="bg-slate-900 border border-slate-800 p-8 rounded-[2.5rem] w-full max-w-md shadow-2xl text-center">
           <div className="bg-emerald-500/10 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 text-emerald-500">
             <Lock size={32} />
@@ -94,24 +104,34 @@ export default function AdminPortal() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-          {/* ENHANCED SEARCH */}
-          <div className="relative flex-grow sm:flex-grow-0 sm:w-80">
+          {/* SEARCH */}
+          <div className="relative flex-grow sm:flex-grow-0 sm:w-64">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
             <input 
               type="text" 
-              placeholder="Search database..." 
+              placeholder="Search..." 
               className="w-full bg-slate-800/50 border border-slate-700 rounded-2xl py-3 pl-12 pr-10 text-sm focus:border-emerald-500 outline-none transition-all text-white"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
-            {searchTerm && (
-              <button onClick={() => setSearchTerm('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors">
-                <X size={14} />
-              </button>
-            )}
           </div>
 
-          {/* QUICK TODAY FILTER */}
+          {/* VENUE DROPDOWN */}
+          <div className="relative">
+            <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
+            <select 
+              value={filterHall}
+              onChange={(e) => setFilterHall(e.target.value)}
+              className="appearance-none bg-slate-800/50 border border-slate-700 text-slate-300 text-[10px] font-black uppercase tracking-widest pl-10 pr-8 py-3 rounded-2xl outline-none focus:border-emerald-500 transition-all cursor-pointer"
+            >
+              <option value="All">All Venues</option>
+              <option value="Main Auditorium">Main Auditorium</option>
+              <option value="Seminar Hall 1">Seminar Hall 1</option>
+              <option value="Seminar Hall 2">Seminar Hall 2</option>
+            </select>
+          </div>
+
+          {/* TODAY FILTER */}
           <button 
             onClick={() => setSearchTerm(new Date().toISOString().split('T')[0])}
             className="bg-blue-600/10 hover:bg-blue-600 text-blue-500 hover:text-white border border-blue-500/20 px-4 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-2"
@@ -119,6 +139,7 @@ export default function AdminPortal() {
             <Filter size={14} /> Today
           </button>
 
+          {/* SHOW/HIDE HISTORY */}
           <button 
             onClick={() => setShowPastEvents(!showPastEvents)}
             className={`flex items-center justify-center gap-2 px-5 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all border ${
@@ -126,20 +147,31 @@ export default function AdminPortal() {
             }`}
           >
             {showPastEvents ? <Eye size={16} /> : <EyeOff size={16} />} 
-            {showPastEvents ? 'Hide History' : 'Show History'}
+            {showPastEvents ? 'History On' : 'History Off'}
           </button>
 
+          {/* PRINT */}
           <button onClick={() => window.print()} className="bg-slate-800 p-3 rounded-2xl border border-slate-700 text-slate-400 hover:text-white transition-all">
             <Download size={20} />
           </button>
         </div>
       </div>
 
-      {/* COMPACT STATS (Simple text instead of cards) */}
+      {/* STATUS BAR */}
       <div className="max-w-7xl mx-auto mb-4 flex items-center justify-between px-6 print:hidden">
-        <span className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em]">
-            Showing {filteredBookings.length} records
-        </span>
+        <div className="flex items-center gap-4">
+            <span className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em]">
+                {filteredBookings.length} Records Found
+            </span>
+            {(searchTerm || filterHall !== 'All') && (
+                <button 
+                    onClick={resetFilters}
+                    className="text-[9px] font-bold text-rose-500 uppercase flex items-center gap-1 hover:underline"
+                >
+                    <X size={12} /> Clear Filters
+                </button>
+            )}
+        </div>
       </div>
 
       {/* DATA TABLE */}
@@ -200,6 +232,12 @@ export default function AdminPortal() {
             </tbody>
           </table>
         </div>
+        {filteredBookings.length === 0 && (
+            <div className="p-20 text-center">
+                <p className="text-slate-600 font-black uppercase tracking-[0.3em] text-[10px]">No records match your criteria</p>
+                <button onClick={resetFilters} className="mt-4 text-emerald-500 font-bold text-xs hover:underline">Reset all filters</button>
+            </div>
+        )}
       </div>
     </div>
   );
