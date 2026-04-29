@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { 
-  Trash2, Calendar, Clock, Shield, Search, Download, Eye, EyeOff, Lock, X, Filter, Building2
+  Trash2, Calendar, Clock, Shield, Search, Download, Eye, EyeOff, Lock, X, Filter
 } from 'lucide-react';
 
 export default function AdminPortal() {
@@ -20,7 +20,6 @@ export default function AdminPortal() {
   }, [isAuthorized]);
 
   async function fetchData() {
-    // Sort by Date (Nearest first) and then Start Time
     const { data } = await supabase
       .from('bookings')
       .select('*, halls(name)')
@@ -91,8 +90,8 @@ export default function AdminPortal() {
   return (
     <div className="min-h-screen bg-[#0F172A] text-slate-200 p-4 md:p-12 font-sans print:bg-white">
       
-      {/* HEADER & CONTROLS */}
-      <div className="max-w-7xl mx-auto mb-8 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 print:hidden">
+      {/* HEADER SECTION */}
+      <div className="max-w-7xl mx-auto mb-10 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 print:hidden">
         <div>
           <div className="flex items-center gap-3 mb-2">
             <Shield className="text-emerald-500" size={28} />
@@ -103,61 +102,68 @@ export default function AdminPortal() {
           <p className="text-slate-500 font-bold text-[10px] uppercase tracking-[0.3em]">Live Data Management</p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+        {/* CONTROLS GROUP */}
+        <div className="flex flex-wrap items-center gap-4 w-full xl:w-auto">
           {/* SEARCH */}
-          <div className="relative flex-grow sm:flex-grow-0 sm:w-64">
+          <div className="relative flex-grow md:flex-grow-0 md:w-64">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
             <input 
               type="text" 
-              placeholder="Search..." 
-              className="w-full bg-slate-800/50 border border-slate-700 rounded-2xl py-3 pl-12 pr-10 text-sm focus:border-emerald-500 outline-none transition-all text-white"
+              placeholder="Search database..." 
+              className="w-full bg-slate-800/40 border border-slate-700/50 rounded-2xl py-3 pl-11 pr-10 text-sm focus:border-emerald-500 outline-none transition-all text-white"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
+            {searchTerm && (
+              <button onClick={() => setSearchTerm('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white">
+                <X size={14} />
+              </button>
+            )}
           </div>
 
-          {/* VENUE DROPDOWN */}
-          <div className="relative">
-            <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
-            <select 
-              value={filterHall}
-              onChange={(e) => setFilterHall(e.target.value)}
-              className="appearance-none bg-slate-800/50 border border-slate-700 text-slate-300 text-[10px] font-black uppercase tracking-widest pl-10 pr-8 py-3 rounded-2xl outline-none focus:border-emerald-500 transition-all cursor-pointer"
+          {/* VENUE PILL SELECTOR (The New Look) */}
+          <div className="flex bg-slate-800/30 p-1 rounded-2xl border border-slate-700/50 overflow-x-auto no-scrollbar">
+            {['All', 'Main Auditorium', 'Seminar Hall 1', 'Seminar Hall 2'].map((hall) => (
+              <button
+                key={hall}
+                onClick={() => setFilterHall(hall)}
+                className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
+                  filterHall === hall
+                    ? 'bg-emerald-600 text-white shadow-lg'
+                    : 'text-slate-500 hover:text-slate-300'
+                }`}
+              >
+                {hall === 'All' ? 'All' : hall.replace('Seminar Hall ', 'SH ')}
+              </button>
+            ))}
+          </div>
+
+          {/* ACTION BUTTONS */}
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => setSearchTerm(new Date().toISOString().split('T')[0])}
+              className="bg-blue-600/10 hover:bg-blue-600 text-blue-500 hover:text-white border border-blue-500/20 px-4 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-2"
             >
-              <option value="All">All Venues</option>
-              <option value="Main Auditorium">Main Auditorium</option>
-              <option value="Seminar Hall 1">Seminar Hall 1</option>
-              <option value="Seminar Hall 2">Seminar Hall 2</option>
-            </select>
+              <Filter size={14} /> Today
+            </button>
+
+            <button 
+              onClick={() => setShowPastEvents(!showPastEvents)}
+              className={`px-4 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all border ${
+                showPastEvents ? 'bg-emerald-500 text-white border-emerald-400' : 'bg-slate-800 text-slate-400 border-slate-700'
+              }`}
+            >
+              {showPastEvents ? 'History On' : 'History Off'}
+            </button>
+
+            <button onClick={() => window.print()} className="bg-slate-800 p-2.5 rounded-xl border border-slate-700 text-slate-400 hover:text-white transition-all">
+              <Download size={18} />
+            </button>
           </div>
-
-          {/* TODAY FILTER */}
-          <button 
-            onClick={() => setSearchTerm(new Date().toISOString().split('T')[0])}
-            className="bg-blue-600/10 hover:bg-blue-600 text-blue-500 hover:text-white border border-blue-500/20 px-4 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-2"
-          >
-            <Filter size={14} /> Today
-          </button>
-
-          {/* SHOW/HIDE HISTORY */}
-          <button 
-            onClick={() => setShowPastEvents(!showPastEvents)}
-            className={`flex items-center justify-center gap-2 px-5 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all border ${
-              showPastEvents ? 'bg-emerald-500 text-white border-emerald-400' : 'bg-slate-800 text-slate-400 border-slate-700'
-            }`}
-          >
-            {showPastEvents ? <Eye size={16} /> : <EyeOff size={16} />} 
-            {showPastEvents ? 'History On' : 'History Off'}
-          </button>
-
-          {/* PRINT */}
-          <button onClick={() => window.print()} className="bg-slate-800 p-3 rounded-2xl border border-slate-700 text-slate-400 hover:text-white transition-all">
-            <Download size={20} />
-          </button>
         </div>
       </div>
 
-      {/* STATUS BAR */}
+      {/* SUB-STATUS BAR */}
       <div className="max-w-7xl mx-auto mb-4 flex items-center justify-between px-6 print:hidden">
         <div className="flex items-center gap-4">
             <span className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em]">
