@@ -13,9 +13,8 @@ export default function AdminPortal() {
   const [password, setPassword] = useState('');
   const [stats, setStats] = useState({ total: 0, today: 0 });
 
-  // Set the admin password here or use process.env.NEXT_PUBLIC_ADMIN_PASSWORD
-  const ADMIN_PASSWORD = "stanns_admin"; 
-
+  // Replace the hardcoded string with this
+const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
   useEffect(() => {
     if (isAuthorized) fetchData();
   }, [isAuthorized]);
