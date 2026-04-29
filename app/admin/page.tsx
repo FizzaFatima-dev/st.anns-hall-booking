@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { 
-  Trash2, Calendar, Clock, BarChart3, Shield, Search, Download, Eye, EyeOff, Lock, X
+  Trash2, Calendar, Clock, Shield, Search, Download, Eye, EyeOff, Lock, X, Filter
 } from 'lucide-react';
 
 export default function AdminPortal() {
@@ -11,7 +11,6 @@ export default function AdminPortal() {
   const [showPastEvents, setShowPastEvents] = useState(false);
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [password, setPassword] = useState('');
-  const [stats, setStats] = useState({ total: 0, today: 0 });
 
   const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
 
@@ -20,32 +19,23 @@ export default function AdminPortal() {
   }, [isAuthorized]);
 
   async function fetchData() {
-    // FIXED: ascending: true makes the "nearest" dates (upcoming) show first
     const { data } = await supabase
       .from('bookings')
       .select('*, halls(name)')
       .order('booking_date', { ascending: true }) 
       .order('start_time', { ascending: true });
     
-    if (data) {
-      setBookings(data);
-      const today = new Date().toISOString().split('T')[0];
-      const todayCount = data.filter(b => b.booking_date === today).length;
-      setStats({ total: data.length, today: todayCount });
-    }
+    if (data) setBookings(data);
   }
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === ADMIN_PASSWORD) {
-      setIsAuthorized(true);
-    } else {
-      alert("Incorrect admin password.");
-    }
+    if (password === ADMIN_PASSWORD) setIsAuthorized(true);
+    else alert("Incorrect admin password.");
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm("Delete this record permanently from the database?")) {
+    if (confirm("Delete this record permanently?")) {
       const { error } = await supabase.from('bookings').delete().eq('id', id);
       if (!error) fetchData();
     }
@@ -54,7 +44,6 @@ export default function AdminPortal() {
   const filteredBookings = bookings.filter(b => {
     const today = new Date().toISOString().split('T')[0];
     const isPast = b.booking_date < today;
-    
     const matchesSearch = 
       b.event_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       b.department?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -81,7 +70,7 @@ export default function AdminPortal() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-          <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-4 rounded-2xl uppercase tracking-widest transition-all">
+          <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-4 rounded-2xl uppercase tracking-widest transition-all shadow-lg shadow-emerald-500/20">
             Authorize
           </button>
         </form>
@@ -92,38 +81,47 @@ export default function AdminPortal() {
   return (
     <div className="min-h-screen bg-[#0F172A] text-slate-200 p-4 md:p-12 font-sans print:bg-white">
       
-      {/* HEADER */}
-      <div className="max-w-7xl mx-auto mb-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 print:hidden">
+      {/* HEADER & CONTROLS */}
+      <div className="max-w-7xl mx-auto mb-8 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 print:hidden">
         <div>
           <div className="flex items-center gap-3 mb-2">
             <Shield className="text-emerald-500" size={28} />
-            <h1 className="text-2xl md:text-3xl font-black tracking-tighter uppercase italic text-white">
+            <h1 className="text-2xl md:text-3xl font-black tracking-tighter uppercase italic text-white leading-none">
               Admin <span className="text-emerald-500">Control</span>
             </h1>
           </div>
           <p className="text-slate-500 font-bold text-[10px] uppercase tracking-[0.3em]">Live Data Management</p>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
-          <div className="relative w-full sm:w-64">
+        <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+          {/* ENHANCED SEARCH */}
+          <div className="relative flex-grow sm:flex-grow-0 sm:w-80">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
             <input 
               type="text" 
-              placeholder="Filter database..." 
+              placeholder="Search database..." 
               className="w-full bg-slate-800/50 border border-slate-700 rounded-2xl py-3 pl-12 pr-10 text-sm focus:border-emerald-500 outline-none transition-all text-white"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
             {searchTerm && (
-              <button onClick={() => setSearchTerm('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white">
+              <button onClick={() => setSearchTerm('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors">
                 <X size={14} />
               </button>
             )}
           </div>
 
+          {/* QUICK TODAY FILTER */}
+          <button 
+            onClick={() => setSearchTerm(new Date().toISOString().split('T')[0])}
+            className="bg-blue-600/10 hover:bg-blue-600 text-blue-500 hover:text-white border border-blue-500/20 px-4 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-2"
+          >
+            <Filter size={14} /> Today
+          </button>
+
           <button 
             onClick={() => setShowPastEvents(!showPastEvents)}
-            className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all border ${
+            className={`flex items-center justify-center gap-2 px-5 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all border ${
               showPastEvents ? 'bg-emerald-500 text-white border-emerald-400' : 'bg-slate-800 text-slate-400 border-slate-700'
             }`}
           >
@@ -137,38 +135,14 @@ export default function AdminPortal() {
         </div>
       </div>
 
-      {/* INTERACTIVE STATS */}
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 print:hidden">
-        <div 
-          onClick={() => setSearchTerm('')}
-          className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 border border-slate-800 p-6 rounded-[2rem] flex items-center gap-6 cursor-pointer hover:border-emerald-500/50 transition-all active:scale-95 group"
-        >
-          <div className="bg-emerald-500/20 p-4 rounded-2xl text-emerald-500 group-hover:bg-emerald-500 group-hover:text-white transition-all">
-            <BarChart3 size={24} />
-          </div>
-          <div>
-            <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">Total Database Records</p>
-            <h3 className="text-3xl font-black text-white">{stats.total}</h3>
-            <p className="text-[9px] text-emerald-500 font-bold uppercase mt-1 opacity-60 group-hover:opacity-100 transition-opacity">Reset View</p>
-          </div>
-        </div>
-
-        <div 
-          onClick={() => setSearchTerm(new Date().toISOString().split('T')[0])}
-          className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 border border-slate-800 p-6 rounded-[2rem] flex items-center gap-6 cursor-pointer hover:border-blue-500/50 transition-all active:scale-95 group"
-        >
-          <div className="bg-blue-500/20 p-4 rounded-2xl text-blue-500 group-hover:bg-blue-500 group-hover:text-white transition-all">
-            <Calendar size={24} />
-          </div>
-          <div>
-            <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">Active for Today</p>
-            <h3 className="text-3xl font-black text-white">{stats.today}</h3>
-            <p className="text-[9px] text-blue-500 font-bold uppercase mt-1 opacity-60 group-hover:opacity-100 transition-opacity">Quick Filter Today</p>
-          </div>
-        </div>
+      {/* COMPACT STATS (Simple text instead of cards) */}
+      <div className="max-w-7xl mx-auto mb-4 flex items-center justify-between px-6 print:hidden">
+        <span className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em]">
+            Showing {filteredBookings.length} records
+        </span>
       </div>
 
-      {/* TABLE */}
+      {/* DATA TABLE */}
       <div className="max-w-7xl mx-auto bg-slate-900/50 border border-slate-800 rounded-[2rem] overflow-hidden backdrop-blur-xl shadow-2xl">
         <div className="overflow-x-auto no-scrollbar">
           <table className="w-full text-left min-w-[800px]">
@@ -190,7 +164,7 @@ export default function AdminPortal() {
                 return (
                   <tr key={b.id} className={`transition-colors ${
                     isPast ? 'opacity-40 grayscale-[0.5]' : 
-                    isToday ? 'bg-emerald-500/5 border-l-2 border-emerald-500 shadow-[inset_10px_0_15px_-10px_rgba(16,185,129,0.1)]' : 
+                    isToday ? 'bg-emerald-500/5 border-l-2 border-emerald-500' : 
                     'hover:bg-white/[0.02]'
                   }`}>
                     <td className="p-6">
@@ -200,7 +174,7 @@ export default function AdminPortal() {
                     <td className="p-6">
                       <div className="flex items-center gap-2 text-slate-300 text-xs font-bold">
                         <Calendar size={12} className="text-emerald-500/50"/> {b.booking_date}
-                        {isToday && <span className="ml-2 text-[8px] bg-emerald-500 text-white px-2 py-0.5 rounded-full font-black tracking-widest">TODAY</span>}
+                        {isToday && <span className="ml-2 text-[8px] bg-emerald-500 text-white px-2 py-0.5 rounded-full font-black tracking-widest animate-pulse">TODAY</span>}
                       </div>
                       <div className="flex items-center gap-2 text-slate-500 text-[10px] mt-1 uppercase">
                         <Clock size={10}/> {b.start_time} - {b.end_time}
