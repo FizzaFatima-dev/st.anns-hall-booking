@@ -119,13 +119,52 @@ export default function BookingPage() {
   if (isSuccess) {
     return (
       <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-6">
-        <div className="max-w-md w-full bg-white rounded-[3rem] shadow-2xl border border-slate-100 p-12 text-center">
-          <div className="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-8">
-            <CheckCircle2 className="w-12 h-12 text-emerald-600" />
+        <div className="max-w-md w-full bg-white rounded-[3rem] shadow-2xl border border-slate-100 overflow-hidden text-center animate-in fade-in zoom-in duration-500">
+          {/* Success Header */}
+          <div className="bg-emerald-600 p-10 text-white">
+            <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <CheckCircle2 className="w-10 h-10 text-white" />
+            </div>
+            <h2 className="text-3xl font-black uppercase italic tracking-tighter mb-2">Confirmed!</h2>
+            <p className="text-emerald-100 font-bold uppercase text-[10px] tracking-[0.2em]">Booking Receipt Generated</p>
           </div>
-          <h2 className="text-3xl font-black uppercase italic tracking-tighter text-slate-900 mb-4">Confirmed!</h2>
-          <p className="text-slate-500 font-bold mb-8 uppercase text-[10px] tracking-widest">Your slot has been secured.</p>
-          <button onClick={() => window.location.reload()} className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:bg-emerald-600 transition-all">Finish</button>
+
+          {/* Booking Details List */}
+          <div className="p-10 space-y-6">
+            <div className="space-y-4">
+              <div className="flex justify-between items-center border-b border-slate-50 pb-3">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Organizer</span>
+                <span className="text-sm font-bold text-slate-900 uppercase">{formData.fullName}</span>
+              </div>
+              
+              <div className="flex justify-between items-center border-b border-slate-50 pb-3">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Venue</span>
+                <span className="text-sm font-bold text-slate-900 uppercase italic">{hall.name}</span>
+              </div>
+
+              <div className="flex justify-between items-center border-b border-slate-50 pb-3">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Date</span>
+                <span className="text-sm font-bold text-slate-900 uppercase">
+                  {selectedDate ? format(selectedDate, 'MMMM do, yyyy') : 'N/A'}
+                </span>
+              </div>
+
+              <div className="flex justify-between items-center border-b border-slate-50 pb-3">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Schedule</span>
+                <div className="flex items-center gap-2 text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">
+                  <Clock className="w-3 h-3" />
+                  <span className="text-xs font-black">{formData.startTime} - {formData.endTime}</span>
+                </div>
+              </div>
+            </div>
+
+            <button 
+              onClick={() => window.location.reload()} 
+              className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:bg-emerald-600 transition-all mt-4"
+            >
+              Back to Home
+            </button>
+          </div>
         </div>
       </div>
     );
