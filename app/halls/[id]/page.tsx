@@ -8,7 +8,7 @@ import {
 } from 'date-fns';
 import { 
   ChevronLeft, ChevronRight, Building2, Calendar as LucideCalendar, 
-  CheckCircle2, Clock, ArrowLeft, ShieldCheck, X, Plus
+  CheckCircle2, Clock, ArrowLeft, ShieldCheck, X, Plus, Sparkles
 } from 'lucide-react';
 
 export default function BookingPage() {
@@ -55,7 +55,7 @@ export default function BookingPage() {
   }, [id]);
 
   const handleSendOTP = async () => {
-    if (!formData.email || !formData.fullName || !formData.dept) return alert("Fill all fields.");
+    if (!formData.email || !formData.fullName || !formData.dept) return alert("Please fill in all required fields.");
     setLoading(true);
     const { error } = await supabase.auth.signInWithOtp({
       email: formData.email.toLowerCase(),
@@ -84,6 +84,20 @@ export default function BookingPage() {
   };
 
   if (!hall) return <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center font-black uppercase tracking-[0.3em] text-slate-300">Loading...</div>;
+
+  if (isSuccess) {
+    return (
+      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-6">
+        <div className="max-w-md w-full bg-white rounded-[3.5rem] shadow-3xl border border-slate-100 overflow-hidden text-center">
+          <div className="bg-emerald-600 p-12 text-white">
+            <div className="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6"><CheckCircle2 className="w-12 h-12" /></div>
+            <h2 className="text-4xl font-black uppercase italic tracking-tighter">Confirmed!</h2>
+          </div>
+          <div className="p-10"><button onClick={() => router.push('/')} className="w-full py-6 bg-slate-900 text-white rounded-3xl font-black text-xs uppercase tracking-widest">Return Home</button></div>
+        </div>
+      </div>
+    );
+  }
 
   const monthStart = startOfMonth(currentDate);
   const calendarDays = eachDayOfInterval({ start: startOfWeek(monthStart), end: endOfWeek(endOfMonth(monthStart)) });
@@ -138,21 +152,18 @@ export default function BookingPage() {
                       className={`min-h-[150px] p-5 border-b border-r border-slate-100 transition-all group relative cursor-pointer ${!isCurrentMonth || isPast ? 'opacity-20 bg-slate-50/30' : 'hover:bg-emerald-50/20'}`}
                     >
                       {isCurrentMonth && !isPast && (
-                        <div className={`absolute top-4 right-4 transition-all ${dayBookings.length === 0 ? 'text-emerald-300' : 'text-slate-200'}`}>
+                        <div className="absolute top-4 right-4 text-emerald-400 opacity-100 transition-all group-hover:rotate-90">
                           <Plus className="w-3 h-3" />
                         </div>
                       )}
                       
                       <span className={`text-lg font-black w-9 h-9 flex items-center justify-center rounded-xl mb-4 transition-all ${isToday ? 'bg-emerald-500 text-white shadow-lg' : 'text-slate-900 group-hover:text-emerald-600'}`}>{format(day, 'd')}</span>
                       
-                      {/* NEW MULTI-SLOT TAG */}
                       {dayBookings.length > 0 && isCurrentMonth && (
                         <div className="mt-auto">
                             <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-rose-50 border border-rose-100 rounded-lg">
                                 <div className="w-1 h-1 rounded-full bg-rose-400 animate-pulse" />
-                                <span className="text-[8px] font-black uppercase text-rose-600 tracking-tighter">
-                                    {dayBookings.length} {dayBookings.length === 1 ? 'Event' : 'Events'}
-                                </span>
+                                <span className="text-[8px] font-black uppercase text-rose-600 tracking-tighter">{dayBookings.length} {dayBookings.length === 1 ? 'Event' : 'Events'}</span>
                             </div>
                         </div>
                       )}
@@ -174,12 +185,41 @@ export default function BookingPage() {
             </div>
           </>
         ) : (
-          /* REGISTRATION FORM (REMAINS SAME AS PREVIOUS) */
-          <div className="max-w-4xl mx-auto py-10 text-center font-black uppercase text-slate-400 italic">Registration UI Loading...</div>
+          /* REGISTRATION FORM - RESTORED */
+          <div className="max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-8 duration-500">
+             <button onClick={() => { setIsRegistering(false); setIsVerifying(false); }} className="flex items-center gap-2 text-slate-400 hover:text-emerald-600 mb-8 font-black text-[10px] uppercase tracking-widest transition-all group">
+                <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1" /> Back to Calendar
+             </button>
+             <div className="bg-white rounded-[3rem] shadow-3xl border border-slate-100 overflow-hidden">
+                <div className="bg-slate-900 p-10 text-white">
+                  <h2 className="text-3xl font-light tracking-widest uppercase italic">{hall.name}</h2>
+                  <p className="text-emerald-400 text-[9px] font-black uppercase tracking-[0.3em] mt-2">Registration for {format(selectedDate!, 'MMMM do')}</p>
+                </div>
+                <div className="p-12">
+                   {!isVerifying ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
+                      <div className="relative group"><input type="text" placeholder=" " value={formData.fullName} onChange={e => setFormData({...formData, fullName: e.target.value})} className="peer w-full border-b border-slate-200 py-3 font-bold text-lg outline-none focus:border-emerald-500 uppercase bg-transparent" /><label className="absolute left-0 top-3 text-slate-400 font-black text-[9px] uppercase tracking-widest transition-all peer-focus:-top-4 peer-focus:text-emerald-500 peer-[:not(:placeholder-shown)]:-top-4">Full Name</label></div>
+                      <div className="relative group"><input type="email" placeholder=" " value={formData.email} onChange={e => setFormData({...formData, email: e.target.value.toLowerCase()})} className="peer w-full border-b border-slate-200 py-3 font-bold text-lg outline-none focus:border-emerald-500 bg-transparent" /><label className="absolute left-0 top-3 text-slate-400 font-black text-[9px] uppercase tracking-widest transition-all peer-focus:-top-4 peer-focus:text-emerald-500 peer-[:not(:placeholder-shown)]:-top-4">Email Address</label></div>
+                      <div className="relative group"><input type="text" placeholder=" " value={formData.dept} onChange={e => setFormData({...formData, dept: e.target.value})} className="peer w-full border-b border-slate-200 py-3 font-bold text-lg outline-none focus:border-emerald-500 uppercase bg-transparent" /><label className="absolute left-0 top-3 text-slate-400 font-black text-[9px] uppercase tracking-widest transition-all peer-focus:-top-4 peer-focus:text-emerald-500 peer-[:not(:placeholder-shown)]:-top-4">Department</label></div>
+                      <div className="relative group"><input type="text" placeholder=" " value={formData.eventName} onChange={e => setFormData({...formData, eventName: e.target.value})} className="peer w-full border-b border-slate-200 py-3 font-bold text-lg outline-none focus:border-emerald-500 uppercase bg-transparent" /><label className="absolute left-0 top-3 text-slate-400 font-black text-[9px] uppercase tracking-widest transition-all peer-focus:-top-4 peer-focus:text-emerald-500 peer-[:not(:placeholder-shown)]:-top-4">Event Name</label></div>
+                      <div className="space-y-2"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Start Time</label><input type="time" value={formData.startTime} onChange={e => setFormData({...formData, startTime: e.target.value})} className="w-full border-b border-slate-200 py-2 font-bold text-lg outline-none focus:border-emerald-500" /></div>
+                      <div className="space-y-2"><label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">End Time</label><input type="time" value={formData.endTime} onChange={e => setFormData({...formData, endTime: e.target.value})} className="w-full border-b border-slate-200 py-2 font-bold text-lg outline-none focus:border-emerald-500" /></div>
+                      <button onClick={handleSendOTP} disabled={loading} className="col-span-full mt-8 py-5 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-2xl hover:bg-emerald-600 transition-all">{loading ? 'Processing...' : 'Verify Email'}</button>
+                    </div>
+                   ) : (
+                    <div className="max-w-md mx-auto text-center space-y-10 py-10">
+                        <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Enter 6-digit Code</p>
+                        <input type="text" maxLength={6} placeholder="000000" autoFocus value={otpCode} onChange={e => setOtpCode(e.target.value)} className="w-full text-center text-5xl font-black tracking-[0.3em] border-b-2 border-emerald-500 outline-none text-slate-900 pb-4 bg-transparent" />
+                        <button onClick={handleVerifyAndBook} disabled={loading} className="w-full py-5 bg-emerald-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-2xl">Confirm Booking</button>
+                    </div>
+                   )}
+                </div>
+             </div>
+          </div>
         )}
       </div>
 
-      {/* AGENDA POPUP */}
+      {/* POPUP REMAINS SAME */}
       {isPopupOpen && selectedDate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsPopupOpen(false)} />
