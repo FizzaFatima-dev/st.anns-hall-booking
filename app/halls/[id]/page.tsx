@@ -1,6 +1,6 @@
 'use client';
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react'; // Added useRef
 import { supabase } from '@/lib/supabase';
 import { 
   format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, 
@@ -47,6 +47,13 @@ export default function BookingPage() {
     eventName: '', eventType: 'Seminar', startTime: '', endTime: ''
   });
 
+  // FIX: Scroll to top whenever registration starts
+  useEffect(() => {
+    if (isRegistering) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [isRegistering]);
+
   useEffect(() => {
     async function fetchData() {
       const { data: hallData } = await supabase.from('halls').select('*').eq('id', id).single();
@@ -59,7 +66,6 @@ export default function BookingPage() {
   }, [id]);
 
   const triggerConfetti = () => {
-    // Basic dynamic import for confetti to avoid installation issues
     const script = document.createElement('script');
     script.src = 'https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js';
     script.onload = () => {
@@ -80,7 +86,7 @@ export default function BookingPage() {
     }
     setLoading(true);
     const { error } = await supabase.auth.signInWithOtp({
-      email: formData.email,
+      email: formData.email.toLowerCase(), // Ensure lowercase on send
       options: { shouldCreateUser: true }
     });
     setLoading(false);
@@ -93,7 +99,7 @@ export default function BookingPage() {
     setLoading(true);
 
     const { error: otpError } = await supabase.auth.verifyOtp({
-      email: formData.email,
+      email: formData.email.toLowerCase(), // Ensure lowercase on verify
       token: otpCode,
       type: 'email' 
     });
@@ -111,8 +117,8 @@ export default function BookingPage() {
       start_time: formData.startTime,
       end_time: formData.endTime,
       user_name: formData.fullName,
-      user_email: formData.email,
-      email: formData.email,
+      user_email: formData.email.toLowerCase(), // Save as lowercase
+      email: formData.email.toLowerCase(),      // Save as lowercase
       department: formData.dept,
       status: 'Confirmed'
     }]);
@@ -145,24 +151,22 @@ export default function BookingPage() {
             <p className="text-emerald-100 font-bold uppercase text-[10px] tracking-[0.3em]">Booking Receipt Generated</p>
           </div>
 
-          <div className="p-10 space-y-6">
-            <div className="space-y-4 text-left">
-              {[
-                { label: 'Organizer', value: formData.fullName },
-                { label: 'Venue', value: hall.name },
-                { label: 'Date', value: selectedDate ? format(selectedDate, 'MMMM do, yyyy') : '' },
-              ].map((item, idx) => (
-                <div key={idx} className="flex justify-between items-center border-b border-slate-50 pb-4">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{item.label}</span>
-                  <span className="text-sm font-black text-slate-900 uppercase italic">{item.value}</span>
-                </div>
-              ))}
-              <div className="flex justify-between items-center border-b border-slate-50 pb-4">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Schedule</span>
-                <div className="flex items-center gap-2 text-emerald-600 bg-emerald-50 px-4 py-1.5 rounded-full border border-emerald-100">
-                  <Clock className="w-3.5 h-3.5" />
-                  <span className="text-xs font-black">{formData.startTime} - {formData.endTime}</span>
-                </div>
+          <div className="p-10 space-y-6 text-left">
+            {[
+              { label: 'Organizer', value: formData.fullName },
+              { label: 'Venue', value: hall.name },
+              { label: 'Date', value: selectedDate ? format(selectedDate, 'MMMM do, yyyy') : '' },
+            ].map((item, idx) => (
+              <div key={idx} className="flex justify-between items-center border-b border-slate-50 pb-4">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{item.label}</span>
+                <span className="text-sm font-black text-slate-900 uppercase italic">{item.value}</span>
+              </div>
+            ))}
+            <div className="flex justify-between items-center border-b border-slate-50 pb-4">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Schedule</span>
+              <div className="flex items-center gap-2 text-emerald-600 bg-emerald-50 px-4 py-1.5 rounded-full border border-emerald-100">
+                <Clock className="w-3.5 h-3.5" />
+                <span className="text-xs font-black">{formData.startTime} - {formData.endTime}</span>
               </div>
             </div>
             <button onClick={() => router.push('/')} className="w-full py-6 bg-slate-900 text-white rounded-3xl font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:bg-emerald-600 transition-all transform hover:-translate-y-1">
@@ -212,26 +216,23 @@ export default function BookingPage() {
                 <div className="p-12">
                    {!isVerifying ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-10">
-                      {[
-                        { label: 'Full Name', key: 'fullName', type: 'text' },
-                        { label: 'Email Address', key: 'email', type: 'email' },
-                        { label: 'Department', key: 'dept', type: 'text' },
-                        { label: 'Event Name', key: 'eventName', type: 'text' },
-                      ].map((field) => (
-                        <div key={field.key} className="relative group">
-                          <input 
-                            type={field.type} 
-                            required
-                            placeholder=" "
-                            value={(formData as any)[field.key]} 
-                            onChange={e => setFormData({...formData, [field.key]: e.target.value})} 
-                            className="peer w-full border-b-2 border-slate-200 py-4 font-bold text-lg outline-none focus:border-emerald-500 transition-colors uppercase bg-transparent"
-                          />
-                          <label className="absolute left-0 top-4 text-slate-400 font-black text-[10px] uppercase tracking-widest transition-all peer-focus:-top-4 peer-focus:text-emerald-500 peer-[:not(:placeholder-shown)]:-top-4">
-                            {field.label} *
-                          </label>
-                        </div>
-                      ))}
+                      <div className="relative group">
+                          <input type="text" placeholder=" " value={formData.fullName} onChange={e => setFormData({...formData, fullName: e.target.value})} className="peer w-full border-b-2 border-slate-200 py-4 font-bold text-lg outline-none focus:border-emerald-500 transition-colors uppercase bg-transparent" />
+                          <label className="absolute left-0 top-4 text-slate-400 font-black text-[10px] uppercase tracking-widest transition-all peer-focus:-top-4 peer-focus:text-emerald-500 peer-[:not(:placeholder-shown)]:-top-4">Full Name *</label>
+                      </div>
+                      <div className="relative group">
+                          {/* FIX: Forced lowercase input */}
+                          <input type="email" placeholder=" " value={formData.email} onChange={e => setFormData({...formData, email: e.target.value.toLowerCase()})} className="peer w-full border-b-2 border-slate-200 py-4 font-bold text-lg outline-none focus:border-emerald-500 transition-colors lowercase bg-transparent" />
+                          <label className="absolute left-0 top-4 text-slate-400 font-black text-[10px] uppercase tracking-widest transition-all peer-focus:-top-4 peer-focus:text-emerald-500 peer-[:not(:placeholder-shown)]:-top-4">Email Address *</label>
+                      </div>
+                      <div className="relative group">
+                          <input type="text" placeholder=" " value={formData.dept} onChange={e => setFormData({...formData, dept: e.target.value})} className="peer w-full border-b-2 border-slate-200 py-4 font-bold text-lg outline-none focus:border-emerald-500 transition-colors uppercase bg-transparent" />
+                          <label className="absolute left-0 top-4 text-slate-400 font-black text-[10px] uppercase tracking-widest transition-all peer-focus:-top-4 peer-focus:text-emerald-500 peer-[:not(:placeholder-shown)]:-top-4">Department *</label>
+                      </div>
+                      <div className="relative group">
+                          <input type="text" placeholder=" " value={formData.eventName} onChange={e => setFormData({...formData, eventName: e.target.value})} className="peer w-full border-b-2 border-slate-200 py-4 font-bold text-lg outline-none focus:border-emerald-500 transition-colors uppercase bg-transparent" />
+                          <label className="absolute left-0 top-4 text-slate-400 font-black text-[10px] uppercase tracking-widest transition-all peer-focus:-top-4 peer-focus:text-emerald-500 peer-[:not(:placeholder-shown)]:-top-4">Event Name *</label>
+                      </div>
                       <div className="space-y-2">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Clock className="w-3 h-3" /> Start Time</label>
                         <input type="time" value={formData.startTime} onChange={e => setFormData({...formData, startTime: e.target.value})} className="w-full border-b-2 border-slate-200 py-3 font-bold text-lg outline-none focus:border-emerald-500" />
