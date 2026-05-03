@@ -7,8 +7,8 @@ import {
   eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, isBefore, startOfDay
 } from 'date-fns';
 import { 
-  ChevronLeft, ChevronRight, Building2, Calendar as LucideCalendar, 
-  CheckCircle2, Clock, ArrowLeft, ShieldCheck, X, Plus, Sparkles
+  ChevronLeft, ChevronRight, Building2, CheckCircle2, Clock, 
+  ArrowLeft, X, Plus, Calendar as CalendarIcon, MapPin
 } from 'lucide-react';
 
 export default function BookingPage() {
@@ -55,7 +55,7 @@ export default function BookingPage() {
   }, [id]);
 
   const handleSendOTP = async () => {
-    if (!formData.email || !formData.fullName || !formData.dept) return alert("Please fill in all required fields.");
+    if (!formData.email || !formData.fullName || !formData.dept) return alert("Please fill all fields.");
     setLoading(true);
     const { error } = await supabase.auth.signInWithOtp({
       email: formData.email.toLowerCase(),
@@ -80,20 +80,45 @@ export default function BookingPage() {
     }]);
 
     setLoading(false);
-    if (!bookingError) setIsSuccess(true);
+    if (!bookingError) {
+        setIsSuccess(true);
+        // Confetti Trigger
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js';
+        script.onload = () => (window as any).confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+        document.head.appendChild(script);
+    }
   };
 
   if (!hall) return <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center font-black uppercase tracking-[0.3em] text-slate-300">Loading...</div>;
 
+  // SUCCESS PAGE WITH DETAILS
   if (isSuccess) {
     return (
       <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-6">
-        <div className="max-w-md w-full bg-white rounded-[3.5rem] shadow-3xl border border-slate-100 overflow-hidden text-center">
-          <div className="bg-emerald-600 p-12 text-white">
-            <div className="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6"><CheckCircle2 className="w-12 h-12" /></div>
-            <h2 className="text-4xl font-black uppercase italic tracking-tighter">Confirmed!</h2>
+        <div className="max-w-md w-full bg-white rounded-[3.5rem] shadow-3xl border border-slate-100 overflow-hidden animate-in zoom-in duration-500">
+          <div className="bg-emerald-600 p-10 text-white text-center">
+            <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6"><CheckCircle2 className="w-10 h-10" /></div>
+            <h2 className="text-3xl font-black uppercase italic tracking-tighter">Confirmed!</h2>
+            <p className="text-emerald-100 text-[10px] font-bold uppercase tracking-[0.2em] mt-2">Your slot has been reserved</p>
           </div>
-          <div className="p-10"><button onClick={() => router.push('/')} className="w-full py-6 bg-slate-900 text-white rounded-3xl font-black text-xs uppercase tracking-widest">Return Home</button></div>
+          <div className="p-8 space-y-6">
+            <div className="space-y-4">
+                <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                    <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm text-emerald-600"><Building2 className="w-5 h-5" /></div>
+                    <div><p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Location</p><p className="text-sm font-bold text-slate-900 uppercase italic">{hall.name}</p></div>
+                </div>
+                <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                    <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm text-emerald-600"><CalendarIcon className="w-5 h-5" /></div>
+                    <div><p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Date</p><p className="text-sm font-bold text-slate-900 uppercase italic">{format(selectedDate!, 'MMMM do, yyyy')}</p></div>
+                </div>
+                <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                    <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm text-emerald-600"><Clock className="w-5 h-5" /></div>
+                    <div><p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Time Slot</p><p className="text-sm font-bold text-slate-900 uppercase italic">{formatTo12Hr(formData.startTime)} - {formatTo12Hr(formData.endTime)}</p></div>
+                </div>
+            </div>
+            <button onClick={() => router.push('/')} className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-xl">Return Home</button>
+          </div>
         </div>
       </div>
     );
@@ -185,7 +210,7 @@ export default function BookingPage() {
             </div>
           </>
         ) : (
-          /* REGISTRATION FORM - RESTORED */
+          /* REGISTRATION FORM UI */
           <div className="max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-8 duration-500">
              <button onClick={() => { setIsRegistering(false); setIsVerifying(false); }} className="flex items-center gap-2 text-slate-400 hover:text-emerald-600 mb-8 font-black text-[10px] uppercase tracking-widest transition-all group">
                 <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1" /> Back to Calendar
@@ -193,7 +218,7 @@ export default function BookingPage() {
              <div className="bg-white rounded-[3rem] shadow-3xl border border-slate-100 overflow-hidden">
                 <div className="bg-slate-900 p-10 text-white">
                   <h2 className="text-3xl font-light tracking-widest uppercase italic">{hall.name}</h2>
-                  <p className="text-emerald-400 text-[9px] font-black uppercase tracking-[0.3em] mt-2">Registration for {format(selectedDate!, 'MMMM do')}</p>
+                  <p className="text-emerald-400 text-[9px] font-black uppercase tracking-[0.3em] mt-2">Registration for {selectedDate ? format(selectedDate, 'MMMM do') : ''}</p>
                 </div>
                 <div className="p-12">
                    {!isVerifying ? (
@@ -219,7 +244,7 @@ export default function BookingPage() {
         )}
       </div>
 
-      {/* POPUP REMAINS SAME */}
+      {/* POPUP REMAINED */}
       {isPopupOpen && selectedDate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsPopupOpen(false)} />
