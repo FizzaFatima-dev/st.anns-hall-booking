@@ -34,7 +34,7 @@ export default function Home() {
           </div>
           <span className="text-xl font-black tracking-tighter text-white uppercase italic">St. Ann's <span className="text-emerald-400">Halls</span></span>
         </div>
-        <div className="hidden md:flex gap-8 text-white/100 font-bold text-[10px] uppercase tracking-[0.2em]">
+        <div className="hidden md:flex gap-8 text-white/80 font-bold text-[10px] uppercase tracking-[0.2em]">
           {/* Linked to top */}
           <button onClick={scrollToTop} className="hover:text-emerald-400 transition-colors uppercase">Home</button>
           <button onClick={scrollToAvailability} className="hover:text-emerald-400 transition-colors uppercase">Availability</button>
@@ -60,7 +60,7 @@ export default function Home() {
               Book Your <br />
               <span className="text-emerald-400">Campus Space</span>
             </h1>
-            <p className="text-base text-slate-1200 mb-8 max-w-md font-medium leading-relaxed opacity-80">
+            <p className="text-base text-slate-300 mb-8 max-w-md font-medium leading-relaxed opacity-80">
               Check real-time availability of St. Ann's seminar halls and auditorium. Secure your venue for departmental events in seconds.
             </p>
             <button 
