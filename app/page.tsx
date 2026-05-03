@@ -9,7 +9,7 @@ import {
 
 // --- SKELETON COMPONENT ---
 const HallSkeleton = () => (
-  <div className="bg-white border border-slate-100 rounded-[3rem] overflow-hidden p-8 space-y-6 animate-pulse shadow-sm">
+  <div className="bg-white border border-slate-100 rounded-3xl overflow-hidden p-8 space-y-6 animate-pulse shadow-sm">
     <div className="h-56 bg-slate-100 rounded-3xl w-full" />
     <div className="space-y-3">
         <div className="h-6 bg-slate-100 rounded w-3/4" />
@@ -52,8 +52,8 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-white font-sans antialiased text-slate-900 selection:bg-emerald-100 selection:text-emerald-900">
       
-      {/* Navigation */}
-      <nav className={`fixed top-0 w-full z-50 flex justify-between items-center px-6 md:px-12 py-6 transition-all duration-500 ${isScrolled ? 'bg-white/80 backdrop-blur-md shadow-sm border-b border-slate-100' : 'bg-transparent'}`}>
+      {/* Navigation - PERFORMANCE FIX: Removed backdrop-blur on mobile */}
+      <nav className={`fixed top-0 w-full z-50 flex justify-between items-center px-6 md:px-12 py-6 transition-all duration-500 ${isScrolled ? 'bg-white md:bg-white/80 md:backdrop-blur-md shadow-sm border-b border-slate-100' : 'bg-transparent'}`}>
         <div className="flex items-center gap-3 group cursor-pointer" onClick={scrollToTop}>
           <div className="w-10 h-10 bg-emerald-500 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/20 group-hover:rotate-6 transition-transform">
             <Building2 className="text-white w-5 h-5" />
@@ -69,11 +69,12 @@ export default function Home() {
       {/* Hero Section */}
       <header className="relative h-[95vh] w-full flex items-center px-6 md:px-10 overflow-hidden bg-slate-900">
         <div 
-          className="absolute inset-0 z-0 bg-cover bg-center animate-slow-zoom"
+          /* PERFORMANCE FIX: Restricted animation to desktop (md:) */
+          className="absolute inset-0 z-0 bg-cover bg-center md:animate-slow-zoom"
           style={{ backgroundImage: `url('https://images.unsplash.com/photo-1492538368677-f6e0afe31dcc?q=80&w=2070&auto=format&fit=crop')` }}
         >
-          {/* FIX: bg-linear-to-r replaces bg-gradient-to-r */}
-          <div className="absolute inset-0 bg-linear-to-r from-slate-900 via-slate-900/80 to-transparent z-10" />
+          {/* Visual Overlay Optimization */}
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-900/90 md:via-slate-900/80 to-transparent z-10" />
           <div className="absolute inset-0 bg-black/40 z-0" />
         </div>
 
@@ -87,7 +88,7 @@ export default function Home() {
               Book Your <br />
               <span className="text-emerald-400 font-black">Campus Space</span>
             </h1>
-            <p className="text-lg text-slate-300 mb-10 max-w-md font-medium leading-relaxed opacity-80">
+            <p className="text-lg text-slate-300 mb-10 max-w-md font-medium leading-relaxed opacity-90">
               A premium, streamlined reservation system for St. Ann's premier venues. Secure your department's next event in a few clicks.
             </p>
             <button 
@@ -103,8 +104,7 @@ export default function Home() {
               <div 
                 key={hall.id} 
                 style={{ animationDelay: `${i * 200}ms` }}
-                /* FIX: rounded-4xl replaces rounded-[2rem] */
-                className="bg-white/5 backdrop-blur-xl border border-white/10 p-6 rounded-4xl flex justify-between items-center hover:bg-white/10 hover:border-emerald-500/50 transition-all animate-float shadow-2xl"
+                className="bg-white/5 backdrop-blur-xl border border-white/10 p-6 rounded-3xl flex justify-between items-center hover:bg-white/10 hover:border-emerald-500/50 transition-all animate-float shadow-2xl"
               >
                 <div className="flex items-center gap-5">
                   <div className="w-14 h-14 bg-emerald-500/20 rounded-2xl flex items-center justify-center border border-emerald-500/20 text-emerald-400">
@@ -125,18 +125,18 @@ export default function Home() {
       </header>
 
       {/* Hall Availability Section */}
-      <section id="availability-section" className="py-32 px-6 md:px-10 bg-[#FBFBFE]">
+      <section id="availability-section" className="py-20 md:py-32 px-6 md:px-10 bg-[#FBFBFE]">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-24">
+          <div className="text-center mb-16 md:mb-24">
             <span className="text-emerald-600 font-black text-[10px] uppercase tracking-[0.6em] mb-4 block">Venue Directory</span>
             <h2 className="text-4xl md:text-6xl font-light text-slate-900 tracking-tight mb-8 uppercase italic leading-none">Hall Availability</h2>
             <div className="w-24 h-1 bg-emerald-500 mx-auto rounded-full mb-10" />
-            <p className="text-slate-400 max-w-xl mx-auto text-[10px] font-black uppercase tracking-[0.3em] leading-loose">
+            <p className="text-slate-500 max-w-xl mx-auto text-[10px] font-black uppercase tracking-[0.3em] leading-loose">
               High-capacity spaces designed for impactful learning, cultural events, and academic excellence.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-12">
             {loading ? (
               <>
                 <HallSkeleton />
@@ -147,37 +147,35 @@ export default function Home() {
               halls.map((hall) => (
                 <div 
                   key={hall.id} 
-                  className="bg-white border border-slate-100 rounded-[3rem] overflow-hidden shadow-xl shadow-slate-200/50 group hover:shadow-3xl hover:shadow-emerald-500/10 transition-all duration-700 hover:-translate-y-3"
+                  className="bg-white border border-slate-100 rounded-[2.5rem] overflow-hidden shadow-xl shadow-slate-200/50 group hover:shadow-2xl hover:shadow-emerald-500/10 transition-all duration-700 md:hover:-translate-y-3"
                 >
                   <div className="h-64 bg-slate-100 relative overflow-hidden">
                     <img 
                       src={hall.name.includes("Auditorium") ? "https://images.unsplash.com/photo-1503418895522-46f9804cda40?q=80&w=2070" : "https://images.unsplash.com/photo-1517457373958-b7bdd4587205?q=80&w=2069"} 
-                      /* FIX: grayscale-20 replaces grayscale-[20%] */
-                      className="w-full h-full object-cover grayscale-20 group-hover:grayscale-0 group-hover:scale-110 transition-all duration-1000" 
+                      className="w-full h-full object-cover grayscale md:grayscale-[20%] group-hover:grayscale-0 md:group-hover:scale-110 transition-all duration-1000" 
                       alt={hall.name}
                     />
-                    <div className="absolute bottom-6 left-6 flex items-center gap-3 px-5 py-2.5 bg-white/90 backdrop-blur-md text-slate-900 rounded-2xl text-[9px] font-black uppercase tracking-widest shadow-2xl">
+                    <div className="absolute bottom-6 left-6 flex items-center gap-3 px-5 py-2.5 bg-white/95 backdrop-blur-md text-slate-900 rounded-2xl text-[9px] font-black uppercase tracking-widest shadow-2xl">
                       <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping" />
                       View Schedule
                     </div>
                   </div>
 
-                  <div className="p-10">
-                    <h3 className="text-2xl font-light text-slate-900 mb-8 tracking-tighter uppercase italic group-hover:text-emerald-600 transition-colors">
+                  <div className="p-8 md:p-10">
+                    <h3 className="text-2xl font-light text-slate-900 mb-6 md:mb-8 tracking-tighter uppercase italic group-hover:text-emerald-600 transition-colors">
                       {hall.name}
                     </h3>
-                    <div className="flex flex-wrap gap-3 mb-10">
-                      <div className="flex items-center gap-2 text-[9px] font-black text-slate-500 bg-slate-50 px-4 py-2.5 rounded-xl border border-slate-100 uppercase tracking-[0.2em]">
+                    <div className="flex flex-wrap gap-3 mb-8 md:mb-10">
+                      <div className="flex items-center gap-2 text-[9px] font-black text-slate-600 bg-slate-50 px-4 py-2.5 rounded-xl border border-slate-100 uppercase tracking-[0.2em]">
                         <Users className="w-4 h-4 text-emerald-500" /> {hall.capacity} Seats
                       </div>
-                      <div className="flex items-center gap-2 text-[9px] font-black text-slate-500 bg-slate-50 px-4 py-2.5 rounded-xl border border-slate-100 uppercase tracking-[0.2em]">
+                      <div className="flex items-center gap-2 text-[9px] font-black text-slate-600 bg-slate-50 px-4 py-2.5 rounded-xl border border-slate-100 uppercase tracking-[0.2em]">
                         <Wifi className="w-4 h-4 text-emerald-500" /> Gigabit WiFi
                       </div>
                     </div>
                     <Link 
                       href={`/halls/${hall.id}`} 
-                      /* FIX: rounded-3xl replaces rounded-[1.5rem] */
-                      className="flex justify-center items-center gap-4 w-full py-6 bg-slate-900 text-white rounded-3xl font-black text-[10px] uppercase tracking-[0.4em] hover:bg-emerald-500 transition-all shadow-2xl shadow-slate-200 hover:shadow-emerald-200 active:scale-95"
+                      className="flex justify-center items-center gap-4 w-full py-6 bg-slate-900 text-white rounded-2xl md:rounded-3xl font-black text-[10px] uppercase tracking-[0.4em] hover:bg-emerald-500 transition-all shadow-xl hover:shadow-emerald-200 active:scale-95"
                     >
                       <Calendar className="w-4 h-4" /> Open Calendar
                     </Link>
@@ -189,10 +187,10 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Modern Footer */}
-      <footer className="bg-slate-900 text-white py-24 px-6 md:px-10 overflow-hidden relative">
+      {/* Footer */}
+      <footer className="bg-slate-900 text-white py-16 md:py-24 px-6 md:px-10 overflow-hidden relative">
         <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2" />
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-16 relative z-10">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12 md:gap-16 relative z-10">
           <div className="col-span-1">
             <div className="flex items-center gap-3 mb-8">
               <div className="w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center shadow-2xl">
@@ -206,16 +204,16 @@ export default function Home() {
           </div>
 
           <div>
-            <h4 className="font-black text-[10px] uppercase tracking-[0.4em] mb-8 text-emerald-400">Navigation</h4>
-            <ul className="space-y-5 text-[10px] font-black uppercase tracking-widest text-slate-500">
+            <h4 className="font-black text-[10px] uppercase tracking-[0.4em] mb-6 md:mb-8 text-emerald-400">Navigation</h4>
+            <ul className="space-y-4 md:space-y-5 text-[10px] font-black uppercase tracking-widest text-slate-500">
               <li><button onClick={scrollToTop} className="hover:text-emerald-400 transition-colors cursor-pointer">Home Page</button></li>
               <li><button onClick={scrollToAvailability} className="hover:text-emerald-400 transition-colors text-left cursor-pointer">Real-Time Availability</button></li>
             </ul>
           </div>
 
           <div>
-            <h4 className="font-black text-[10px] uppercase tracking-[0.4em] mb-8 text-emerald-400">Venues</h4>
-            <ul className="space-y-5 text-[10px] font-black uppercase tracking-widest text-slate-500">
+            <h4 className="font-black text-[10px] uppercase tracking-[0.4em] mb-6 md:mb-8 text-emerald-400">Venues</h4>
+            <ul className="space-y-4 md:space-y-5 text-[10px] font-black uppercase tracking-widest text-slate-500">
               {halls.map(hall => (
                 <li key={hall.id}>
                   <Link href={`/halls/${hall.id}`} className="hover:text-emerald-400 transition-colors italic">
@@ -227,8 +225,8 @@ export default function Home() {
           </div>
 
           <div>
-            <h4 className="font-black text-[10px] uppercase tracking-[0.4em] mb-8 text-emerald-400">Contact</h4>
-            <ul className="space-y-5 text-[10px] font-black uppercase tracking-widest text-slate-500">
+            <h4 className="font-black text-[10px] uppercase tracking-[0.4em] mb-6 md:mb-8 text-emerald-400">Contact</h4>
+            <ul className="space-y-4 md:space-y-5 text-[10px] font-black uppercase tracking-widest text-slate-500">
               <li>
                 <a href="mailto:info@stannscollegehyd.com" className="flex items-center gap-4 hover:text-emerald-400 transition-colors group">
                   <Mail className="w-4 h-4 text-emerald-400" /> info@stannscollegehyd.com
@@ -243,7 +241,7 @@ export default function Home() {
           </div>
         </div>
         
-        <div className="max-w-7xl mx-auto mt-24 pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6 text-[9px] font-black uppercase tracking-[0.4em] text-slate-600">
+        <div className="max-w-7xl mx-auto mt-16 md:mt-24 pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6 text-[9px] font-black uppercase tracking-[0.4em] text-slate-600 text-center md:text-left">
           <p>© 2026 St. Ann's College Booking Portal</p>
           <div className="flex gap-8 italic">
             <span className="text-emerald-400/50">Direct</span>
