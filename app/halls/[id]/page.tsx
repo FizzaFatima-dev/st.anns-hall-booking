@@ -58,7 +58,7 @@ export default function BookingPage() {
   const handleSendOTP = async () => {
     setErrorMsg(null);
     if (!formData.email || !formData.fullName || !formData.dept || !formData.startTime || !formData.endTime) {
-      setErrorMsg("Please fill in all required fields.");
+      setErrorMsg("Missing Information: Please fill all fields.");
       return;
     }
 
@@ -66,12 +66,12 @@ export default function BookingPage() {
     const maxTime = "16:30";
 
     if (formData.startTime < minTime || formData.startTime > maxTime || formData.endTime < minTime || formData.endTime > maxTime) {
-      setErrorMsg("Operational Hours: 07:30 AM - 04:30 PM. Please adjust your time.");
+      setErrorMsg("Time Error: Operational hours are 07:30 AM - 04:30 PM.");
       return;
     }
 
     if (formData.startTime >= formData.endTime) {
-      setErrorMsg("The end time must be later than the start time.");
+      setErrorMsg("Time Error: End time must be after start time.");
       return;
     }
 
@@ -90,7 +90,7 @@ export default function BookingPage() {
     const { error: otpError } = await supabase.auth.verifyOtp({
       email: formData.email.toLowerCase(), token: otpCode, type: 'email' 
     });
-    if (otpError) { setLoading(false); setErrorMsg("Invalid verification code."); return; }
+    if (otpError) { setLoading(false); setErrorMsg("Invalid Code. Try again."); return; }
 
     const { error: bookingError } = await supabase.from('bookings').insert([{
       hall_id: id, event_name: formData.eventName, booking_date: format(selectedDate!, 'yyyy-MM-dd'),
@@ -155,7 +155,7 @@ export default function BookingPage() {
               </div>
             </div>
 
-            <div className="bg-white rounded-4xl md:rounded-[4rem] shadow-2xl shadow-slate-200/60 border border-slate-100 overflow-hidden mb-20">
+            <div className="bg-white rounded-4xl:rounded-[4rem] shadow-2xl shadow-slate-200/60 border border-slate-100 overflow-hidden mb-20">
               <div className="p-8 md:p-14 flex flex-col md:flex-row justify-between items-center gap-10 border-b border-slate-50 bg-slate-50/20">
                 <h2 className="text-3xl font-light text-slate-900 uppercase italic tracking-tighter">{format(currentDate, 'MMMM yyyy')}</h2>
                 <div className="flex items-center gap-4 bg-white p-2 rounded-[1.8rem] border border-slate-200 shadow-sm w-full md:w-auto justify-center">
@@ -198,52 +198,53 @@ export default function BookingPage() {
                   <p className="text-emerald-400 text-[10px] font-black uppercase tracking-[0.4em] opacity-80">Request for {selectedDate ? format(selectedDate, 'MMMM do, yyyy') : ''}</p>
                 </div>
                 <div className="p-8 md:p-20">
-                   
-                   {/* PRETTY ALERT MESSAGE */}
-                   {errorMsg && (
-                    <div className="mb-10 p-5 bg-rose-50 border border-rose-100 rounded-3xl flex items-center gap-4 animate-in slide-in-from-top-4">
-                      <div className="w-10 h-10 bg-rose-500 rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-rose-200">
-                        <AlertCircle className="text-white w-5 h-5" />
-                      </div>
-                      <p className="text-[11px] font-bold text-rose-600 uppercase tracking-wider">{errorMsg}</p>
-                    </div>
-                   )}
-
                    {!isVerifying ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-12">
-                      {/* DARKER, MORE PROMINENT INPUTS */}
-                      <div className="relative border-b-2 border-slate-400 pb-2 focus-within:border-emerald-500 transition-colors">
-                        <input type="text" placeholder="Full Name" value={formData.fullName} onChange={e => setFormData({...formData, fullName: e.target.value})} className="w-full py-2 font-bold text-xl outline-none uppercase bg-transparent text-slate-900 placeholder-slate-400" />
+                      {/* DARKER BORDERS FOR BETTER VISIBILITY */}
+                      <div className="relative border-b-2 border-slate-600 pb-2 focus-within:border-emerald-500 transition-colors">
+                        <input type="text" placeholder="Full Name" value={formData.fullName} onChange={e => setFormData({...formData, fullName: e.target.value})} className="w-full py-2 font-bold text-xl outline-none uppercase bg-transparent text-slate-900 placeholder-slate-300" />
                         <label className="absolute left-0 -top-6 text-emerald-600 font-black text-[9px] uppercase tracking-widest">Host Full Name</label>
                       </div>
-                      <div className="relative border-b-2 border-slate-400 pb-2 focus-within:border-emerald-500 transition-colors">
-                        <input type="email" placeholder="Email Address" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value.toLowerCase()})} className="w-full py-2 font-bold text-xl outline-none bg-transparent text-slate-900 placeholder-slate-400" />
+                      <div className="relative border-b-2 border-slate-600 pb-2 focus-within:border-emerald-500 transition-colors">
+                        <input type="email" placeholder="Email Address" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value.toLowerCase()})} className="w-full py-2 font-bold text-xl outline-none bg-transparent text-slate-900 placeholder-slate-300" />
                         <label className="absolute left-0 -top-6 text-emerald-600 font-black text-[9px] uppercase tracking-widest">Academic Email</label>
                       </div>
-                      <div className="relative border-b-2 border-slate-400 pb-2 focus-within:border-emerald-500 transition-colors">
-                        <input type="text" placeholder="Department" value={formData.dept} onChange={e => setFormData({...formData, dept: e.target.value})} className="w-full py-2 font-bold text-xl outline-none uppercase bg-transparent text-slate-900 placeholder-slate-400" />
+                      <div className="relative border-b-2 border-slate-600 pb-2 focus-within:border-emerald-500 transition-colors">
+                        <input type="text" placeholder="Department" value={formData.dept} onChange={e => setFormData({...formData, dept: e.target.value})} className="w-full py-2 font-bold text-xl outline-none uppercase bg-transparent text-slate-900 placeholder-slate-300" />
                         <label className="absolute left-0 -top-6 text-emerald-600 font-black text-[9px] uppercase tracking-widest">Department</label>
                       </div>
-                      <div className="relative border-b-2 border-slate-400 pb-2 focus-within:border-emerald-500 transition-colors">
-                        <input type="text" placeholder="Event Name" value={formData.eventName} onChange={e => setFormData({...formData, eventName: e.target.value})} className="w-full py-2 font-bold text-xl outline-none uppercase bg-transparent text-slate-900 placeholder-slate-400" />
+                      <div className="relative border-b-2 border-slate-600 pb-2 focus-within:border-emerald-500 transition-colors">
+                        <input type="text" placeholder="Event Name" value={formData.eventName} onChange={e => setFormData({...formData, eventName: e.target.value})} className="w-full py-2 font-bold text-xl outline-none uppercase bg-transparent text-slate-900 placeholder-slate-300" />
                         <label className="absolute left-0 -top-6 text-emerald-600 font-black text-[9px] uppercase tracking-widest">Event Title</label>
                       </div>
                       <div className="space-y-3">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Start Time</label>
-                        <input type="time" min="07:30" max="16:30" value={formData.startTime} onChange={e => setFormData({...formData, startTime: e.target.value})} className="w-full bg-slate-100/50 p-4 rounded-2xl font-bold text-lg outline-none border-2 border-slate-400 focus:border-emerald-500 transition-all" />
+                        <input type="time" min="07:30" max="16:30" value={formData.startTime} onChange={e => setFormData({...formData, startTime: e.target.value})} className="w-full bg-slate-100 p-4 rounded-2xl font-bold text-lg outline-none border-2 border-slate-600 focus:border-emerald-500 transition-all" />
                       </div>
                       <div className="space-y-3">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">End Time</label>
-                        <input type="time" min="07:30" max="16:30" value={formData.endTime} onChange={e => setFormData({...formData, endTime: e.target.value})} className="w-full bg-slate-100/50 p-4 rounded-2xl font-bold text-lg outline-none border-2 border-slate-400 focus:border-emerald-500 transition-all" />
+                        <input type="time" min="07:30" max="16:30" value={formData.endTime} onChange={e => setFormData({...formData, endTime: e.target.value})} className="w-full bg-slate-100 p-4 rounded-2xl font-bold text-lg outline-none border-2 border-slate-600 focus:border-emerald-500 transition-all" />
                       </div>
-                      <button onClick={handleSendOTP} disabled={loading} className="col-span-full mt-6 py-6 bg-slate-900 text-white rounded-3xl font-black text-[11px] uppercase tracking-[0.4em] shadow-2xl active:scale-95 hover:bg-slate-800 transition-all">
-                        {loading ? 'Processing...' : 'Generate Verification OTP'}
-                      </button>
+
+                      {/* ERROR MESSAGE & BUTTON TOGETHER */}
+                      <div className="col-span-full mt-10 space-y-6">
+                        {errorMsg && (
+                          <div className="p-5 bg-rose-50 border border-rose-200 rounded-4xl flex items-center gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                            <div className="w-10 h-10 bg-rose-500 rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-rose-200">
+                              <AlertCircle className="text-white w-5 h-5" />
+                            </div>
+                            <p className="text-[11px] font-black text-rose-600 uppercase tracking-widest">{errorMsg}</p>
+                          </div>
+                        )}
+                        <button onClick={handleSendOTP} disabled={loading} className="w-full py-6 bg-slate-900 text-white rounded-3xl font-black text-[12px] uppercase tracking-[0.4em] shadow-2xl active:scale-95 hover:bg-emerald-600 transition-all">
+                          {loading ? 'Processing...' : 'Confirm Booking'}
+                        </button>
+                      </div>
                     </div>
                    ) : (
                     <div className="max-w-md mx-auto text-center space-y-12 py-8">
                         <div><p className="text-[10px] font-black uppercase text-slate-400 tracking-[0.4em] mb-4">Enter Code</p><input type="text" maxLength={6} placeholder="000000" autoFocus value={otpCode} onChange={e => setOtpCode(e.target.value)} className="w-full text-center text-4xl font-light tracking-[0.5em] border-b-2 border-emerald-500 outline-none text-slate-900 pb-6 bg-transparent" /></div>
-                        <button onClick={handleVerifyAndBook} disabled={loading} className="w-full py-6 bg-emerald-600 text-white rounded-3xl font-black uppercase text-[10px] tracking-[0.4em] shadow-2xl active:scale-95 transition-all">Complete Reservation</button>
+                        <button onClick={handleVerifyAndBook} disabled={loading} className="w-full py-6 bg-emerald-600 text-white rounded-3xl font-black uppercase text-[10px] tracking-[0.4em] shadow-2xl active:scale-95 transition-all">Verify & Complete</button>
                     </div>
                    )}
                 </div>
