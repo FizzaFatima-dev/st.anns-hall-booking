@@ -32,10 +32,25 @@ export default function Home() {
       const { data } = await supabase.from('halls').select('*');
       if (data) {
         const updatedHalls = data.map(hall => {
-          // Update Capacities as requested
-          if (hall.name.includes("Seminar")) return { ...hall, capacity: 200 };
-          if (hall.name.includes("Auditorium")) return { ...hall, capacity: 800 };
-          return hall;
+          // Rename logic based on EXACT original database names
+          let finalName = hall.name;
+          let finalCapacity = hall.capacity;
+
+          if (hall.name === "Seminar Hall 1") {
+            finalName = "Gnanamma Hall";
+            finalCapacity = 200;
+          } else if (hall.name === "Seminar Hall 2") {
+            finalName = "Deickmann Hall";
+            finalCapacity = 200;
+          } else if (hall.name.includes("Auditorium")) {
+            finalCapacity = 800;
+          }
+
+          return { 
+            ...hall, 
+            name: finalName, 
+            capacity: finalCapacity 
+          };
         });
         setHalls(updatedHalls);
       }
@@ -50,10 +65,10 @@ export default function Home() {
     document.getElementById('availability-section')?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // Helper function to map the correct local image to the hall name
+  // Helper function to map images to the NEW names
   const getHallImage = (name: string) => {
-    if (name.includes("Seminar Hall 1")) return "/seminar hall 1.jpeg";
-    if (name.includes("Seminar Hall 2")) return "/Seminar hall 2.jpeg";
+    if (name === "Gnanamma Hall") return "/seminar hall 1.jpeg";
+    if (name === "Deickmann Hall") return "/Seminar hall 2.jpeg";
     if (name.includes("Auditorium")) return "/Auditorium.jpeg";
     return "/Auditorium.jpeg"; // Fallback
   };
@@ -79,11 +94,12 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* Hero Section */}
+      {/* Hero Section - UPDATED WITH YOUR IMAGE */}
       <header className="relative h-[95vh] w-full flex items-center px-6 md:px-10 overflow-hidden bg-slate-900">
         <div 
           className="absolute inset-0 z-0 bg-cover bg-center"
-          style={{ backgroundImage: `url('/Auditorium.jpeg')` }}
+          // Your image integrated here
+          style={{ backgroundImage: `url('https://i.ytimg.com/vi/6PSL5bKVzOs/maxresdefault.jpg')` }}
         >
           <div className="absolute inset-0 bg-linear-to-r from-slate-900 via-slate-900/90 md:via-slate-900/80 to-transparent z-10" />
           <div className="absolute inset-0 bg-black/40 z-0" />
