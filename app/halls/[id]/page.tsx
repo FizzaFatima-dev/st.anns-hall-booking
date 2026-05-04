@@ -55,7 +55,23 @@ export default function BookingPage() {
   }, [id]);
 
   const handleSendOTP = async () => {
-    if (!formData.email || !formData.fullName || !formData.dept) return alert("Please fill all fields.");
+    if (!formData.email || !formData.fullName || !formData.dept || !formData.startTime || !formData.endTime) {
+      return alert("Please fill all fields.");
+    }
+
+    // --- TIME LIMIT VALIDATION ---
+    const minTime = "07:30";
+    const maxTime = "16:30";
+
+    if (formData.startTime < minTime || formData.startTime > maxTime || formData.endTime < minTime || formData.endTime > maxTime) {
+      return alert("Bookings are only permitted between 7:30 AM and 4:30 PM.");
+    }
+
+    if (formData.startTime >= formData.endTime) {
+      return alert("End time must be after the start time.");
+    }
+    // ----------------------------
+
     setLoading(true);
     const { error } = await supabase.auth.signInWithOtp({
       email: formData.email.toLowerCase(),
@@ -86,6 +102,8 @@ export default function BookingPage() {
         script.src = 'https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js';
         script.onload = () => (window as any).confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
         document.head.appendChild(script);
+    } else {
+      alert("Booking error: " + bookingError.message);
     }
   };
 
@@ -128,7 +146,6 @@ export default function BookingPage() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
-      {/* PERFORMANCE FIX: Removed backdrop-blur on mobile, restricted to md: screens */}
       <nav className="bg-white border-b border-slate-100 px-6 md:px-12 py-6 sticky top-0 z-40 flex justify-between items-center md:bg-white/80 md:backdrop-blur-md">
         <div className="flex items-center gap-3 cursor-pointer" onClick={() => router.push('/')}>
           <div className="w-10 h-10 bg-emerald-500 rounded-2xl flex items-center justify-center shadow-lg"><Building2 className="text-white w-5 h-5" /></div>
@@ -155,7 +172,7 @@ export default function BookingPage() {
               </div>
             </div>
 
-            <div className="bg-white rounded-[2rem] md:rounded-[4rem] shadow-2xl shadow-slate-200/60 border border-slate-100 overflow-hidden mb-20">
+            <div className="bg-white rounded-4xl md:rounded-[4rem] shadow-2xl shadow-slate-200/60 border border-slate-100 overflow-hidden mb-20">
               <div className="p-8 md:p-14 flex flex-col md:flex-row justify-between items-center gap-10 border-b border-slate-50 bg-slate-50/20">
                 <h2 className="text-3xl font-light text-slate-900 uppercase italic tracking-tighter">{format(currentDate, 'MMMM yyyy')}</h2>
                 <div className="flex items-center gap-4 bg-white p-2 rounded-[1.8rem] border border-slate-200 shadow-sm w-full md:w-auto justify-center">
@@ -176,7 +193,7 @@ export default function BookingPage() {
                     <div 
                       key={idx} 
                       onClick={() => { if (isCurrentMonth && !isPast) { setSelectedDate(day); setIsPopupOpen(true); } }}
-                      className={`min-h-[80px] md:min-h-40 p-2 md:p-6 border-b border-r border-slate-50 transition-all group relative cursor-pointer ${!isCurrentMonth || isPast ? 'opacity-20 bg-slate-50/10 cursor-not-allowed' : 'hover:bg-emerald-50/30'}`}
+                      className={`min-h-20 md:min-h-40 p-2 md:p-6 border-b border-r border-slate-50 transition-all group relative cursor-pointer ${!isCurrentMonth || isPast ? 'opacity-20 bg-slate-50/10 cursor-not-allowed' : 'hover:bg-emerald-50/30'}`}
                     >
                       <span className={`text-sm md:text-xl font-black w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-xl md:rounded-2xl mb-2 md:mb-6 transition-all ${isToday ? 'bg-emerald-500 text-white shadow-xl shadow-emerald-200 rotate-3' : 'text-slate-900 group-hover:text-emerald-600'}`}>{format(day, 'd')}</span>
                       
@@ -200,7 +217,7 @@ export default function BookingPage() {
              <button onClick={() => { setIsRegistering(false); setIsVerifying(false); }} className="flex items-center gap-3 text-slate-400 hover:text-emerald-600 mb-10 font-black text-[10px] uppercase tracking-[0.4em] transition-all group">
                 <ArrowLeft className="w-4 h-4 group-hover:-translate-x-2 transition-transform" /> Return to Calendar
              </button>
-             <div className="bg-white rounded-[2rem] md:rounded-[4rem] shadow-3xl border border-slate-100 overflow-hidden">
+             <div className="bg-white rounded-4xl md:rounded-[4rem] shadow-3xl border border-slate-100 overflow-hidden">
                 <div className="bg-slate-900 p-8 md:p-16 text-white relative">
                   <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 blur-[100px] rounded-full" />
                   <h2 className="text-3xl md:text-4xl font-light tracking-tight uppercase italic mb-2">{hall.name}</h2>
@@ -209,7 +226,6 @@ export default function BookingPage() {
                 <div className="p-8 md:p-20">
                    {!isVerifying ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-12">
-                      {/* INPUT OPTIMIZATION: Increased border weight and color for clear visibility */}
                       <div className="relative group border-b-2 border-slate-200 focus-within:border-emerald-500 transition-colors pb-2">
                         <input type="text" placeholder="Full Name" value={formData.fullName} onChange={e => setFormData({...formData, fullName: e.target.value})} className="peer w-full py-2 font-bold text-xl outline-none uppercase bg-transparent placeholder-slate-300 text-slate-900" />
                         <label className="absolute left-0 -top-6 text-emerald-600 font-black text-[9px] uppercase tracking-widest transition-all">Host Full Name</label>
@@ -227,12 +243,12 @@ export default function BookingPage() {
                         <label className="absolute left-0 -top-6 text-emerald-600 font-black text-[9px] uppercase tracking-widest transition-all">Event Title</label>
                       </div>
                       <div className="space-y-3">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Start Time</label>
-                        <input type="time" value={formData.startTime} onChange={e => setFormData({...formData, startTime: e.target.value})} className="w-full bg-slate-50 p-4 rounded-2xl font-bold text-lg outline-none border border-slate-200 focus:border-emerald-500" />
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Start Time (Min 07:30 AM)</label>
+                        <input type="time" min="07:30" max="16:30" value={formData.startTime} onChange={e => setFormData({...formData, startTime: e.target.value})} className="w-full bg-slate-50 p-4 rounded-2xl font-bold text-lg outline-none border border-slate-200 focus:border-emerald-500" />
                       </div>
                       <div className="space-y-3">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">End Time</label>
-                        <input type="time" value={formData.endTime} onChange={e => setFormData({...formData, endTime: e.target.value})} className="w-full bg-slate-50 p-4 rounded-2xl font-bold text-lg outline-none border border-slate-200 focus:border-emerald-500" />
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">End Time (Max 04:30 PM)</label>
+                        <input type="time" min="07:30" max="16:30" value={formData.endTime} onChange={e => setFormData({...formData, endTime: e.target.value})} className="w-full bg-slate-50 p-4 rounded-2xl font-bold text-lg outline-none border border-slate-200 focus:border-emerald-500" />
                       </div>
                       <button onClick={handleSendOTP} disabled={loading} className="col-span-full mt-6 md:mt-10 py-6 bg-slate-900 text-white rounded-3xl font-black text-[11px] uppercase tracking-[0.4em] shadow-2xl hover:bg-emerald-600 active:scale-95 transition-all">{loading ? 'Processing...' : 'Generate Verification OTP'}</button>
                     </div>

@@ -52,7 +52,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-white font-sans antialiased text-slate-900 selection:bg-emerald-100 selection:text-emerald-900">
       
-      {/* Navigation - PERFORMANCE FIX: Removed backdrop-blur on mobile */}
+      {/* Navigation - PERFORMANCE FIX: Solid background on mobile for clarity */}
       <nav className={`fixed top-0 w-full z-50 flex justify-between items-center px-6 md:px-12 py-6 transition-all duration-500 ${isScrolled ? 'bg-white md:bg-white/80 md:backdrop-blur-md shadow-sm border-b border-slate-100' : 'bg-transparent'}`}>
         <div className="flex items-center gap-3 group cursor-pointer" onClick={scrollToTop}>
           <div className="w-10 h-10 bg-emerald-500 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/20 group-hover:rotate-6 transition-transform">
@@ -69,20 +69,22 @@ export default function Home() {
       {/* Hero Section */}
       <header className="relative h-[95vh] w-full flex items-center px-6 md:px-10 overflow-hidden bg-slate-900">
         <div 
-          /* PERFORMANCE FIX: Restricted animation to desktop (md:) */
+          /* PERFORMANCE FIX: Slow zoom restricted to desktop */
           className="absolute inset-0 z-0 bg-cover bg-center md:animate-slow-zoom"
           style={{ backgroundImage: `url('https://images.unsplash.com/photo-1492538368677-f6e0afe31dcc?q=80&w=2070&auto=format&fit=crop')` }}
         >
-          {/* Visual Overlay Optimization */}
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-900/90 md:via-slate-900/80 to-transparent z-10" />
+          <div className="absolute inset-0 bg-linear-to-r from-slate-900 via-slate-900/90 md:via-slate-900/80 to-transparent z-10" />
           <div className="absolute inset-0 bg-black/40 z-0" />
         </div>
 
         <div className="relative z-20 grid grid-cols-1 lg:grid-cols-2 w-full max-w-7xl mx-auto gap-12 items-center pt-20">
           <div className="animate-in fade-in slide-in-from-left duration-1000">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-[0.4em] mb-8">
-              <Sparkles className="w-3 h-3" />
-              St. Ann's Official Portal
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              Official Portal
             </div>
             <h1 className="text-5xl md:text-8xl font-light text-white leading-[0.9] tracking-tight mb-8 uppercase italic">
               Book Your <br />
@@ -152,7 +154,8 @@ export default function Home() {
                   <div className="h-64 bg-slate-100 relative overflow-hidden">
                     <img 
                       src={hall.name.includes("Auditorium") ? "https://images.unsplash.com/photo-1503418895522-46f9804cda40?q=80&w=2070" : "https://images.unsplash.com/photo-1517457373958-b7bdd4587205?q=80&w=2069"} 
-                      className="w-full h-full object-cover grayscale md:grayscale-[20%] group-hover:grayscale-0 md:group-hover:scale-110 transition-all duration-1000" 
+                      /* FIXED: Grayscale filters removed for natural color */
+                      className="w-full h-full object-cover group-hover:scale-110 transition-all duration-1000" 
                       alt={hall.name}
                     />
                     <div className="absolute bottom-6 left-6 flex items-center gap-3 px-5 py-2.5 bg-white/95 backdrop-blur-md text-slate-900 rounded-2xl text-[9px] font-black uppercase tracking-widest shadow-2xl">
@@ -206,8 +209,8 @@ export default function Home() {
           <div>
             <h4 className="font-black text-[10px] uppercase tracking-[0.4em] mb-6 md:mb-8 text-emerald-400">Navigation</h4>
             <ul className="space-y-4 md:space-y-5 text-[10px] font-black uppercase tracking-widest text-slate-500">
-              <li><button onClick={scrollToTop} className="hover:text-emerald-400 transition-colors cursor-pointer">Home Page</button></li>
-              <li><button onClick={scrollToAvailability} className="hover:text-emerald-400 transition-colors text-left cursor-pointer">Real-Time Availability</button></li>
+              <li><button onClick={scrollToTop} className="hover:text-emerald-400 transition-colors cursor-pointer text-left">Home Page</button></li>
+              <li><button onClick={scrollToAvailability} className="hover:text-emerald-400 transition-colors text-left cursor-pointer">Availability</button></li>
             </ul>
           </div>
 
