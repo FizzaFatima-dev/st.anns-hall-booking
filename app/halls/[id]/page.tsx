@@ -8,7 +8,7 @@ import {
 } from 'date-fns';
 import { 
   ChevronLeft, ChevronRight, Building2, CheckCircle2, 
-  ArrowLeft, X, Plus, Calendar as CalendarIcon, Sparkles, Info
+  ArrowLeft, X, Plus, Calendar as CalendarIcon, Sparkles, AlertCircle
 } from 'lucide-react';
 
 export default function BookingPage() {
@@ -24,6 +24,7 @@ export default function BookingPage() {
   const [isVerifying, setIsVerifying] = useState(false);
   const [otpCode, setOtpCode] = useState('');
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     fullName: '', email: '', dept: '', eventName: '', startTime: '', endTime: ''
@@ -55,19 +56,23 @@ export default function BookingPage() {
   }, [id]);
 
   const handleSendOTP = async () => {
+    setErrorMsg(null);
     if (!formData.email || !formData.fullName || !formData.dept || !formData.startTime || !formData.endTime) {
-      return alert("Please fill all fields.");
+      setErrorMsg("Please fill in all required fields.");
+      return;
     }
 
     const minTime = "07:30";
     const maxTime = "16:30";
 
     if (formData.startTime < minTime || formData.startTime > maxTime || formData.endTime < minTime || formData.endTime > maxTime) {
-      return alert("Bookings are only permitted between 7:30 AM and 4:30 PM.");
+      setErrorMsg("Operational Hours: 07:30 AM - 04:30 PM. Please adjust your time.");
+      return;
     }
 
     if (formData.startTime >= formData.endTime) {
-      return alert("End time must be after the start time.");
+      setErrorMsg("The end time must be later than the start time.");
+      return;
     }
 
     setLoading(true);
@@ -76,7 +81,7 @@ export default function BookingPage() {
       options: { shouldCreateUser: true }
     });
     setLoading(false);
-    if (error) alert("Error: " + error.message);
+    if (error) setErrorMsg(error.message);
     else setIsVerifying(true);
   };
 
@@ -85,7 +90,7 @@ export default function BookingPage() {
     const { error: otpError } = await supabase.auth.verifyOtp({
       email: formData.email.toLowerCase(), token: otpCode, type: 'email' 
     });
-    if (otpError) { setLoading(false); alert("Invalid Code"); return; }
+    if (otpError) { setLoading(false); setErrorMsg("Invalid verification code."); return; }
 
     const { error: bookingError } = await supabase.from('bookings').insert([{
       hall_id: id, event_name: formData.eventName, booking_date: format(selectedDate!, 'yyyy-MM-dd'),
@@ -150,21 +155,6 @@ export default function BookingPage() {
               </div>
             </div>
 
-            {/* INSTRUCTION BOX */}
-            <div className="mb-12 bg-emerald-50/50 border border-emerald-100 p-8 rounded-[2.5rem] flex flex-col md:flex-row items-start gap-6">
-              <div className="w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-emerald-200">
-                <Info className="text-white w-6 h-6" />
-              </div>
-              <div className="space-y-2">
-                <h4 className="font-black text-[11px] uppercase tracking-[0.3em] text-emerald-700 italic">Booking Instructions</h4>
-                <ul className="text-[10px] font-bold text-slate-600 uppercase tracking-widest space-y-2 leading-relaxed">
-                  <li>• Use your <span className="text-emerald-600">Departmental Academic Email</span> for verification.</li>
-                  <li>• Bookings are only allowed between <span className="text-emerald-600">07:30 AM and 04:30 PM</span>.</li>
-                  <li>• Ensure the start time is at least <span className="text-emerald-600">30 minutes</span> before the event.</li>
-                </ul>
-              </div>
-            </div>
-
             <div className="bg-white rounded-4xl md:rounded-[4rem] shadow-2xl shadow-slate-200/60 border border-slate-100 overflow-hidden mb-20">
               <div className="p-8 md:p-14 flex flex-col md:flex-row justify-between items-center gap-10 border-b border-slate-50 bg-slate-50/20">
                 <h2 className="text-3xl font-light text-slate-900 uppercase italic tracking-tighter">{format(currentDate, 'MMMM yyyy')}</h2>
@@ -199,7 +189,7 @@ export default function BookingPage() {
           </>
         ) : (
           <div className="max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-12 duration-700">
-             <button onClick={() => { setIsRegistering(false); setIsVerifying(false); }} className="flex items-center gap-3 text-slate-400 hover:text-emerald-600 mb-10 font-black text-[10px] uppercase tracking-[0.4em] transition-all group">
+             <button onClick={() => { setIsRegistering(false); setIsVerifying(false); setErrorMsg(null); }} className="flex items-center gap-3 text-slate-400 hover:text-emerald-600 mb-10 font-black text-[10px] uppercase tracking-[0.4em] transition-all group">
                 <ArrowLeft className="w-4 h-4 group-hover:-translate-x-2 transition-transform" /> Return to Calendar
              </button>
              <div className="bg-white rounded-4xl md:rounded-[4rem] shadow-3xl border border-slate-100 overflow-hidden">
@@ -208,15 +198,47 @@ export default function BookingPage() {
                   <p className="text-emerald-400 text-[10px] font-black uppercase tracking-[0.4em] opacity-80">Request for {selectedDate ? format(selectedDate, 'MMMM do, yyyy') : ''}</p>
                 </div>
                 <div className="p-8 md:p-20">
+                   
+                   {/* PRETTY ALERT MESSAGE */}
+                   {errorMsg && (
+                    <div className="mb-10 p-5 bg-rose-50 border border-rose-100 rounded-3xl flex items-center gap-4 animate-in slide-in-from-top-4">
+                      <div className="w-10 h-10 bg-rose-500 rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-rose-200">
+                        <AlertCircle className="text-white w-5 h-5" />
+                      </div>
+                      <p className="text-[11px] font-bold text-rose-600 uppercase tracking-wider">{errorMsg}</p>
+                    </div>
+                   )}
+
                    {!isVerifying ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-12">
-                      <div className="relative border-b-2 border-slate-200 pb-2"><input type="text" placeholder="Full Name" value={formData.fullName} onChange={e => setFormData({...formData, fullName: e.target.value})} className="w-full py-2 font-bold text-xl outline-none uppercase bg-transparent" /><label className="absolute left-0 -top-6 text-emerald-600 font-black text-[9px] uppercase tracking-widest">Host Full Name</label></div>
-                      <div className="relative border-b-2 border-slate-200 pb-2"><input type="email" placeholder="Email Address" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value.toLowerCase()})} className="w-full py-2 font-bold text-xl outline-none bg-transparent" /><label className="absolute left-0 -top-6 text-emerald-600 font-black text-[9px] uppercase tracking-widest">Academic Email</label></div>
-                      <div className="relative border-b-2 border-slate-200 pb-2"><input type="text" placeholder="Department" value={formData.dept} onChange={e => setFormData({...formData, dept: e.target.value})} className="w-full py-2 font-bold text-xl outline-none uppercase bg-transparent" /><label className="absolute left-0 -top-6 text-emerald-600 font-black text-[9px] uppercase tracking-widest">Department</label></div>
-                      <div className="relative border-b-2 border-slate-200 pb-2"><input type="text" placeholder="Event Name" value={formData.eventName} onChange={e => setFormData({...formData, eventName: e.target.value})} className="w-full py-2 font-bold text-xl outline-none uppercase bg-transparent" /><label className="absolute left-0 -top-6 text-emerald-600 font-black text-[9px] uppercase tracking-widest">Event Title</label></div>
-                      <div className="space-y-3"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Start Time</label><input type="time" min="07:30" max="16:30" value={formData.startTime} onChange={e => setFormData({...formData, startTime: e.target.value})} className="w-full bg-slate-50 p-4 rounded-2xl font-bold text-lg outline-none border border-slate-200" /></div>
-                      <div className="space-y-3"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">End Time</label><input type="time" min="07:30" max="16:30" value={formData.endTime} onChange={e => setFormData({...formData, endTime: e.target.value})} className="w-full bg-slate-50 p-4 rounded-2xl font-bold text-lg outline-none border border-slate-200" /></div>
-                      <button onClick={handleSendOTP} disabled={loading} className="col-span-full mt-6 py-6 bg-slate-900 text-white rounded-3xl font-black text-[11px] uppercase tracking-[0.4em] shadow-2xl active:scale-95 transition-all">Generate Verification OTP</button>
+                      {/* DARKER, MORE PROMINENT INPUTS */}
+                      <div className="relative border-b-2 border-slate-400 pb-2 focus-within:border-emerald-500 transition-colors">
+                        <input type="text" placeholder="Full Name" value={formData.fullName} onChange={e => setFormData({...formData, fullName: e.target.value})} className="w-full py-2 font-bold text-xl outline-none uppercase bg-transparent text-slate-900 placeholder-slate-400" />
+                        <label className="absolute left-0 -top-6 text-emerald-600 font-black text-[9px] uppercase tracking-widest">Host Full Name</label>
+                      </div>
+                      <div className="relative border-b-2 border-slate-400 pb-2 focus-within:border-emerald-500 transition-colors">
+                        <input type="email" placeholder="Email Address" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value.toLowerCase()})} className="w-full py-2 font-bold text-xl outline-none bg-transparent text-slate-900 placeholder-slate-400" />
+                        <label className="absolute left-0 -top-6 text-emerald-600 font-black text-[9px] uppercase tracking-widest">Academic Email</label>
+                      </div>
+                      <div className="relative border-b-2 border-slate-400 pb-2 focus-within:border-emerald-500 transition-colors">
+                        <input type="text" placeholder="Department" value={formData.dept} onChange={e => setFormData({...formData, dept: e.target.value})} className="w-full py-2 font-bold text-xl outline-none uppercase bg-transparent text-slate-900 placeholder-slate-400" />
+                        <label className="absolute left-0 -top-6 text-emerald-600 font-black text-[9px] uppercase tracking-widest">Department</label>
+                      </div>
+                      <div className="relative border-b-2 border-slate-400 pb-2 focus-within:border-emerald-500 transition-colors">
+                        <input type="text" placeholder="Event Name" value={formData.eventName} onChange={e => setFormData({...formData, eventName: e.target.value})} className="w-full py-2 font-bold text-xl outline-none uppercase bg-transparent text-slate-900 placeholder-slate-400" />
+                        <label className="absolute left-0 -top-6 text-emerald-600 font-black text-[9px] uppercase tracking-widest">Event Title</label>
+                      </div>
+                      <div className="space-y-3">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Start Time</label>
+                        <input type="time" min="07:30" max="16:30" value={formData.startTime} onChange={e => setFormData({...formData, startTime: e.target.value})} className="w-full bg-slate-100/50 p-4 rounded-2xl font-bold text-lg outline-none border-2 border-slate-400 focus:border-emerald-500 transition-all" />
+                      </div>
+                      <div className="space-y-3">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">End Time</label>
+                        <input type="time" min="07:30" max="16:30" value={formData.endTime} onChange={e => setFormData({...formData, endTime: e.target.value})} className="w-full bg-slate-100/50 p-4 rounded-2xl font-bold text-lg outline-none border-2 border-slate-400 focus:border-emerald-500 transition-all" />
+                      </div>
+                      <button onClick={handleSendOTP} disabled={loading} className="col-span-full mt-6 py-6 bg-slate-900 text-white rounded-3xl font-black text-[11px] uppercase tracking-[0.4em] shadow-2xl active:scale-95 hover:bg-slate-800 transition-all">
+                        {loading ? 'Processing...' : 'Generate Verification OTP'}
+                      </button>
                     </div>
                    ) : (
                     <div className="max-w-md mx-auto text-center space-y-12 py-8">
@@ -254,7 +276,6 @@ export default function BookingPage() {
                         <p className="text-sm font-black text-slate-900 uppercase italic mb-1">{b.event_name}</p>
                         <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{b.department}</p>
                       </div>
-                      {/* FIXED: Showing both Start and End Time */}
                       <div className="text-[9px] font-black text-emerald-600 bg-white px-3 py-2 rounded-xl border border-slate-100 whitespace-nowrap">
                         {formatTo12Hr(b.start_time)} - {formatTo12Hr(b.end_time)}
                       </div>
