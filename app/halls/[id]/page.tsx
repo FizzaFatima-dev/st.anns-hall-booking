@@ -8,7 +8,7 @@ import {
 } from 'date-fns';
 import { 
   ChevronLeft, ChevronRight, Building2, CheckCircle2, 
-  ArrowLeft, X, Plus, Calendar as CalendarIcon, Sparkles, AlertCircle, MapPin, Clock, Calendar
+  ArrowLeft, X, Plus, AlertCircle, MapPin, Clock, Calendar
 } from 'lucide-react';
 
 export default function BookingPage() {
@@ -42,14 +42,17 @@ export default function BookingPage() {
   useEffect(() => {
     async function fetchData() {
       const { data: hallData } = await supabase.from('halls').select('*').eq('id', id).single();
-      if (hallData) setHall(hallData);
-
-      const { data: bookingData } = await supabase
-        .from('bookings')
-        .select('*')
-        .eq('hall_id', id)
-        .order('start_time', { ascending: true });
       
+      if (hallData) {
+        let finalName = hallData.name;
+        if (hallData.name === "Seminar Hall 1") finalName = "Gnanamma Hall";
+        else if (hallData.name === "Seminar Hall 2") finalName = "Deickmann Hall";
+        else if (hallData.name.includes("Auditorium")) finalName = "St. Joseph's Auditorium";
+        
+        setHall({ ...hallData, name: finalName });
+      }
+
+      const { data: bookingData } = await supabase.from('bookings').select('*').eq('hall_id', id).order('start_time', { ascending: true });
       if (bookingData) setBookings(bookingData);
     }
     fetchData();
@@ -61,20 +64,16 @@ export default function BookingPage() {
       setErrorMsg("Missing Information: Please fill all fields.");
       return;
     }
-
     const minTime = "07:30";
     const maxTime = "16:30";
-
     if (formData.startTime < minTime || formData.startTime > maxTime || formData.endTime < minTime || formData.endTime > maxTime) {
       setErrorMsg("Time Error: Operational hours are 07:30 AM - 04:30 PM.");
       return;
     }
-
     if (formData.startTime >= formData.endTime) {
       setErrorMsg("Time Error: End time must be after start time.");
       return;
     }
-
     setLoading(true);
     const { error } = await supabase.auth.signInWithOtp({
       email: formData.email.toLowerCase(),
@@ -119,7 +118,6 @@ export default function BookingPage() {
             <h2 className="text-2xl font-black uppercase italic tracking-widest">Booking Receipt</h2>
             <p className="text-[10px] uppercase tracking-[0.3em] opacity-80 mt-1">Transaction Successful</p>
           </div>
-          
           <div className="p-8 space-y-6">
             <div className="space-y-4">
                <div className="flex justify-between items-start border-b border-slate-50 pb-4">
@@ -128,7 +126,6 @@ export default function BookingPage() {
                     <p className="text-lg font-black text-slate-900 uppercase italic leading-tight">{formData.eventName}</p>
                   </div>
                </div>
-
                <div className="grid grid-cols-2 gap-4">
                   <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
                     <Calendar className="w-4 h-4 text-emerald-600 mb-2" />
@@ -141,7 +138,6 @@ export default function BookingPage() {
                     <p className="text-[11px] font-bold text-slate-900">{formatTo12Hr(formData.startTime)} - {formatTo12Hr(formData.endTime)}</p>
                   </div>
                </div>
-
                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center gap-4">
                   <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm"><MapPin className="text-emerald-600 w-5 h-5" /></div>
                   <div>
@@ -150,12 +146,10 @@ export default function BookingPage() {
                   </div>
                </div>
             </div>
-
             <div className="pt-4">
               <button onClick={() => router.push('/')} className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] hover:bg-emerald-600 transition-all shadow-2xl active:scale-95">Return to Portal</button>
             </div>
           </div>
-          
           <div className="bg-slate-50 p-4 text-center border-t border-slate-100">
              <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.4em]">St. Ann's Hall Booking System</p>
           </div>
@@ -262,13 +256,10 @@ export default function BookingPage() {
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">End Time</label>
                         <input type="time" min="07:30" max="16:30" value={formData.endTime} onChange={e => setFormData({...formData, endTime: e.target.value})} className="w-full bg-slate-100 p-4 rounded-2xl font-bold text-lg outline-none border-2 border-slate-600 focus:border-emerald-500 transition-all" />
                       </div>
-
                       <div className="col-span-full mt-10 space-y-6">
                         {errorMsg && (
                           <div className="p-5 bg-rose-50 border border-rose-200 rounded-4xl flex items-center gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                            <div className="w-10 h-10 bg-rose-500 rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-rose-200">
-                              <AlertCircle className="text-white w-5 h-5" />
-                            </div>
+                            <div className="w-10 h-10 bg-rose-500 rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-rose-200"><AlertCircle className="text-white w-5 h-5" /></div>
                             <p className="text-[11px] font-black text-rose-600 uppercase tracking-widest">{errorMsg}</p>
                           </div>
                         )}
@@ -298,24 +289,14 @@ export default function BookingPage() {
                 <p className="text-[9px] font-black uppercase tracking-[0.4em] text-emerald-400 mb-1">Daily Agenda</p>
                 <h3 className="text-2xl font-light tracking-tighter uppercase italic">{format(selectedDate, 'MMM do')}</h3>
               </div>
-              <button 
-                onClick={() => setIsPopupOpen(false)} 
-                className="w-10 h-10 flex items-center justify-center bg-white/10 rounded-2xl hover:bg-white/20 transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <button onClick={() => setIsPopupOpen(false)} className="w-10 h-10 flex items-center justify-center bg-white/10 rounded-2xl hover:bg-white/20 transition-colors"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-8">
               <div className="space-y-4 mb-10 max-h-[40vh] overflow-y-auto pr-2 custom-scrollbar">
                 {bookings.filter(b => isSameDay(new Date(b.booking_date), selectedDate)).map((b, i) => (
                     <div key={i} className="flex items-center justify-between p-5 bg-slate-50 rounded-3xl border border-slate-100">
-                      <div>
-                        <p className="text-sm font-black text-slate-900 uppercase italic mb-1">{b.event_name}</p>
-                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{b.department}</p>
-                      </div>
-                      <div className="text-[9px] font-black text-emerald-600 bg-white px-3 py-2 rounded-xl border border-slate-100 whitespace-nowrap">
-                        {formatTo12Hr(b.start_time)} - {formatTo12Hr(b.end_time)}
-                      </div>
+                      <div><p className="text-sm font-black text-slate-900 uppercase italic mb-1">{b.event_name}</p><p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{b.department}</p></div>
+                      <div className="text-[9px] font-black text-emerald-600 bg-white px-3 py-2 rounded-xl border border-slate-100 whitespace-nowrap">{formatTo12Hr(b.start_time)} - {formatTo12Hr(b.end_time)}</div>
                     </div>
                 ))}
                 {bookings.filter(b => isSameDay(new Date(b.booking_date), selectedDate)).length === 0 && (
