@@ -8,7 +8,7 @@ import {
 } from 'date-fns';
 import { 
   ChevronLeft, ChevronRight, Building2, CheckCircle2, 
-  ArrowLeft, X, Plus, Calendar as CalendarIcon, Sparkles, AlertCircle
+  ArrowLeft, X, Plus, Calendar as CalendarIcon, Sparkles, AlertCircle, MapPin, Clock, Calendar
 } from 'lucide-react';
 
 export default function BookingPage() {
@@ -113,13 +113,51 @@ export default function BookingPage() {
   if (isSuccess) {
     return (
       <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-6">
-        <div className="max-w-md w-full bg-white rounded-[3.5rem] shadow-3xl border border-slate-100 overflow-hidden animate-in zoom-in duration-500">
-          <div className="bg-emerald-600 p-12 text-white text-center">
-            <div className="w-20 h-20 bg-white/20 rounded-3xl flex items-center justify-center mx-auto mb-6 rotate-3"><CheckCircle2 className="w-10 h-10" /></div>
-            <h2 className="text-3xl font-light uppercase italic tracking-widest">Confirmed!</h2>
+        <div className="max-w-md w-full bg-white rounded-[3rem] shadow-3xl border border-slate-100 overflow-hidden animate-in zoom-in duration-500">
+          <div className="bg-emerald-600 p-10 text-white text-center">
+            <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4 rotate-3"><CheckCircle2 className="w-8 h-8" /></div>
+            <h2 className="text-2xl font-black uppercase italic tracking-widest">Booking Receipt</h2>
+            <p className="text-[10px] uppercase tracking-[0.3em] opacity-80 mt-1">Transaction Successful</p>
           </div>
-          <div className="p-10 space-y-8">
-            <button onClick={() => router.push('/')} className="w-full py-6 bg-slate-900 text-white rounded-3xl font-black text-[10px] uppercase tracking-[0.3em] hover:bg-emerald-600 transition-all shadow-2xl">Return Home</button>
+          
+          <div className="p-8 space-y-6">
+            <div className="space-y-4">
+               <div className="flex justify-between items-start border-b border-slate-50 pb-4">
+                  <div className="space-y-1">
+                    <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Event Name</p>
+                    <p className="text-lg font-black text-slate-900 uppercase italic leading-tight">{formData.eventName}</p>
+                  </div>
+               </div>
+
+               <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                    <Calendar className="w-4 h-4 text-emerald-600 mb-2" />
+                    <p className="text-[8px] font-black uppercase text-slate-400 tracking-widest">Date</p>
+                    <p className="text-[11px] font-bold text-slate-900">{selectedDate ? format(selectedDate, 'MMM do, yyyy') : ''}</p>
+                  </div>
+                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                    <Clock className="w-4 h-4 text-emerald-600 mb-2" />
+                    <p className="text-[8px] font-black uppercase text-slate-400 tracking-widest">Time Slot</p>
+                    <p className="text-[11px] font-bold text-slate-900">{formatTo12Hr(formData.startTime)} - {formatTo12Hr(formData.endTime)}</p>
+                  </div>
+               </div>
+
+               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center gap-4">
+                  <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm"><MapPin className="text-emerald-600 w-5 h-5" /></div>
+                  <div>
+                    <p className="text-[8px] font-black uppercase text-slate-400 tracking-widest">Venue</p>
+                    <p className="text-[11px] font-bold text-slate-900 uppercase italic">{hall.name}</p>
+                  </div>
+               </div>
+            </div>
+
+            <div className="pt-4">
+              <button onClick={() => router.push('/')} className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] hover:bg-emerald-600 transition-all shadow-2xl active:scale-95">Return to Portal</button>
+            </div>
+          </div>
+          
+          <div className="bg-slate-50 p-4 text-center border-t border-slate-100">
+             <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.4em]">St. Ann's Hall Booking System</p>
           </div>
         </div>
       </div>
@@ -155,7 +193,7 @@ export default function BookingPage() {
               </div>
             </div>
 
-            <div className="bg-white rounded-4xl:rounded-[4rem] shadow-2xl shadow-slate-200/60 border border-slate-100 overflow-hidden mb-20">
+            <div className="bg-white rounded-4xl md:rounded-[4rem] shadow-2xl shadow-slate-200/60 border border-slate-100 overflow-hidden mb-20">
               <div className="p-8 md:p-14 flex flex-col md:flex-row justify-between items-center gap-10 border-b border-slate-50 bg-slate-50/20">
                 <h2 className="text-3xl font-light text-slate-900 uppercase italic tracking-tighter">{format(currentDate, 'MMMM yyyy')}</h2>
                 <div className="flex items-center gap-4 bg-white p-2 rounded-[1.8rem] border border-slate-200 shadow-sm w-full md:w-auto justify-center">
@@ -200,7 +238,6 @@ export default function BookingPage() {
                 <div className="p-8 md:p-20">
                    {!isVerifying ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-12">
-                      {/* DARKER BORDERS FOR BETTER VISIBILITY */}
                       <div className="relative border-b-2 border-slate-600 pb-2 focus-within:border-emerald-500 transition-colors">
                         <input type="text" placeholder="Full Name" value={formData.fullName} onChange={e => setFormData({...formData, fullName: e.target.value})} className="w-full py-2 font-bold text-xl outline-none uppercase bg-transparent text-slate-900 placeholder-slate-300" />
                         <label className="absolute left-0 -top-6 text-emerald-600 font-black text-[9px] uppercase tracking-widest">Host Full Name</label>
@@ -226,7 +263,6 @@ export default function BookingPage() {
                         <input type="time" min="07:30" max="16:30" value={formData.endTime} onChange={e => setFormData({...formData, endTime: e.target.value})} className="w-full bg-slate-100 p-4 rounded-2xl font-bold text-lg outline-none border-2 border-slate-600 focus:border-emerald-500 transition-all" />
                       </div>
 
-                      {/* ERROR MESSAGE & BUTTON TOGETHER */}
                       <div className="col-span-full mt-10 space-y-6">
                         {errorMsg && (
                           <div className="p-5 bg-rose-50 border border-rose-200 rounded-4xl flex items-center gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
