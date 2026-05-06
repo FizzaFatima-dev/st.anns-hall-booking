@@ -234,15 +234,16 @@ export default function Home() {
             <h4 className="font-black text-[10px] uppercase tracking-[0.4em] mb-8 text-emerald-500">Contact</h4>
             <ul className="space-y-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">
               <li>
-                <a href="mailto:info@stannscollegehyd.com" className="flex items-center gap-3 hover:text-emerald-400 transition-colors group">
+                {/* FIXED MAIL LINK WITH HTTPS */}
+                <a href="https://mail.google.com/mail/?view=cm&fs=1&to=info@stannscollegehyd.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 hover:text-emerald-400 transition-colors group">
                   <Mail className="w-4 h-4 text-emerald-500 group-hover:scale-110 transition-transform" /> 
                   info@stannscollegehyd.com
                 </a>
               </li>
               <li>
-                {/* VERIFIED LOCATION LINK */}
+                {/* FIXED MAP LINK WITH HTTPS TO OFFICIAL COLLEGE LOCATION */}
                 <a 
-                  href="https://maps.app.goo.gl/yLz1uCndpmsXW5eZ8" 
+                  href="https://www.google.com/maps/place/St.+Ann's+College+for+Women/@17.393066,78.435646,15z" 
                   target="_blank" 
                   rel="noopener noreferrer" 
                   className="flex items-center gap-3 hover:text-emerald-400 transition-colors group"
