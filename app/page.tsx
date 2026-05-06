@@ -72,7 +72,7 @@ export default function Home() {
     <div className="min-h-screen bg-white font-sans antialiased text-slate-900 selection:bg-emerald-100 selection:text-emerald-900">
       
       {/* Navigation */}
-      <nav className={`fixed top-0 w-full z-[100] flex justify-between items-center px-6 md:px-12 py-6 transition-all duration-500 ${isScrolled ? 'bg-white shadow-sm border-b border-slate-100' : 'bg-transparent'}`}>
+      <nav className={`fixed top-0 w-full z-100 flex justify-between items-center px-6 md:px-12 py-6 transition-all duration-500 ${isScrolled ? 'bg-white shadow-sm border-b border-slate-100' : 'bg-transparent'}`}>
         <div className="flex items-center gap-3 group cursor-pointer" onClick={scrollToTop}>
           <div className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-lg overflow-hidden group-hover:scale-105 transition-transform">
             <img src="/favicon.ico" alt="Logo" className="w-full h-full object-contain p-1" />
@@ -91,7 +91,7 @@ export default function Home() {
           className="absolute inset-0 z-0 bg-cover bg-center"
           style={{ backgroundImage: `url('https://i.ytimg.com/vi/6PSL5bKVzOs/maxresdefault.jpg')` }}
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-900/90 md:via-slate-900/80 to-transparent z-10" />
+          <div className="absolute inset-0 bg-linear-to-r from-slate-950 via-slate-900/90 md:via-slate-900/80 to-transparent z-10" />
           <div className="absolute inset-0 bg-black/40 z-0" />
         </div>
 

@@ -60,7 +60,7 @@ export default function BookingPage() {
 
   const handleSendOTP = async () => {
     setErrorMsg(null);
-    if (!formData.email || !formData.fullName || !formData.dept || !formData.startTime || !formData.endTime) {
+    if (!formData.email || !formData.fullName || !formData.dept || !formData.startTime || !formData.endTime || !formData.eventName) {
       setErrorMsg("Missing Information: Please fill all fields.");
       return;
     }
@@ -74,7 +74,31 @@ export default function BookingPage() {
       setErrorMsg("Time Error: End time must be after start time.");
       return;
     }
+
     setLoading(true);
+
+    // --- CONFLICT CHECK LOGIC ---
+    const formattedDate = format(selectedDate!, 'yyyy-MM-dd');
+    const { data: conflicts, error: checkError } = await supabase
+      .from('bookings')
+      .select('event_name, start_time, end_time')
+      .eq('hall_id', id)
+      .eq('booking_date', formattedDate)
+      .lt('start_time', formData.endTime) 
+      .gt('end_time', formData.startTime); 
+
+    if (checkError) {
+      setLoading(false);
+      setErrorMsg("Database Error: Could not verify availability.");
+      return;
+    }
+
+    if (conflicts && conflicts.length > 0) {
+      setLoading(false);
+      setErrorMsg(`Schedule Conflict: This time overlaps with "${conflicts[0].event_name}" (${formatTo12Hr(conflicts[0].start_time)} - ${formatTo12Hr(conflicts[0].end_time)}).`);
+      return;
+    }
+
     const { error } = await supabase.auth.signInWithOtp({
       email: formData.email.toLowerCase(),
       options: { shouldCreateUser: true }
@@ -104,6 +128,8 @@ export default function BookingPage() {
         script.src = 'https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js';
         script.onload = () => (window as any).confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
         document.head.appendChild(script);
+    } else {
+        setErrorMsg("Booking Failed. Please contact administration.");
     }
   };
 
@@ -166,7 +192,9 @@ export default function BookingPage() {
     <div className="min-h-screen bg-[#F8FAFC]">
       <nav className="bg-white border-b border-slate-100 px-6 md:px-12 py-6 sticky top-0 z-40 flex justify-between items-center md:bg-white/80 md:backdrop-blur-md">
         <div className="flex items-center gap-3 cursor-pointer" onClick={() => router.push('/')}>
-          <div className="w-10 h-10 bg-emerald-500 rounded-2xl flex items-center justify-center shadow-lg"><Building2 className="text-white w-5 h-5" /></div>
+          <div className="w-10 h-10 bg-emerald-500 rounded-2xl flex items-center justify-center shadow-lg overflow-hidden">
+             <img src="/favicon.ico" alt="Logo" className="w-full h-full object-contain p-1" />
+          </div>
           <span className="text-2xl font-black tracking-tighter text-slate-900 uppercase italic">St. Ann's</span>
         </div>
       </nav>
@@ -179,7 +207,7 @@ export default function BookingPage() {
                 <button onClick={() => router.push('/')} className="flex items-center gap-2 text-slate-400 hover:text-emerald-600 mb-8 font-black text-[10px] uppercase tracking-[0.4em] transition-all group">
                     <ArrowLeft className="w-4 h-4 group-hover:-translate-x-2 transition-transform" /> Back to Halls
                 </button>
-                <h1 className="text-4xl md:text-6xl font-light tracking-tight text-slate-900 uppercase italic leading-none">{hall.name}</h1>
+                <h1 className="text-5xl md:text-8xl font-black tracking-tighter text-slate-900 uppercase italic leading-[0.8]">{hall.name}</h1>
               </div>
               <div className="flex gap-4 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
                 <div className="flex items-center gap-3 bg-white px-5 py-2.5 rounded-2xl border border-slate-100 shadow-sm shrink-0"><div className="w-2 h-2 rounded-full bg-emerald-500" /><span className="text-[9px] font-black uppercase text-slate-600 tracking-widest">Available</span></div>
@@ -189,7 +217,7 @@ export default function BookingPage() {
 
             <div className="bg-white rounded-4xl md:rounded-[4rem] shadow-2xl shadow-slate-200/60 border border-slate-100 overflow-hidden mb-20">
               <div className="p-8 md:p-14 flex flex-col md:flex-row justify-between items-center gap-10 border-b border-slate-50 bg-slate-50/20">
-                <h2 className="text-3xl font-light text-slate-900 uppercase italic tracking-tighter">{format(currentDate, 'MMMM yyyy')}</h2>
+                <h2 className="text-4xl md:text-5xl font-black text-slate-900 uppercase italic tracking-tighter">{format(currentDate, 'MMMM yyyy')}</h2>
                 <div className="flex items-center gap-4 bg-white p-2 rounded-[1.8rem] border border-slate-200 shadow-sm w-full md:w-auto justify-center">
                   <button onClick={() => setCurrentDate(subMonths(currentDate, 1))} className="p-3 text-slate-400 hover:text-emerald-600 transition-colors bg-slate-50 rounded-2xl"><ChevronLeft className="w-5 h-5" /></button>
                   <button onClick={() => setCurrentDate(new Date())} className="px-8 py-3 bg-slate-900 text-white rounded-[1.2rem] font-black text-[10px] uppercase tracking-[0.3em]">Today</button>
@@ -226,7 +254,7 @@ export default function BookingPage() {
              </button>
              <div className="bg-white rounded-4xl md:rounded-[4rem] shadow-3xl border border-slate-100 overflow-hidden">
                 <div className="bg-slate-900 p-8 md:p-16 text-white relative">
-                  <h2 className="text-3xl md:text-4xl font-light tracking-tight uppercase italic mb-2">{hall.name}</h2>
+                  <h2 className="text-3xl md:text-5xl font-black tracking-tighter uppercase italic mb-2 leading-none">{hall.name}</h2>
                   <p className="text-emerald-400 text-[10px] font-black uppercase tracking-[0.4em] opacity-80">Request for {selectedDate ? format(selectedDate, 'MMMM do, yyyy') : ''}</p>
                 </div>
                 <div className="p-8 md:p-20">
@@ -248,14 +276,31 @@ export default function BookingPage() {
                         <input type="text" placeholder="Event Name" value={formData.eventName} onChange={e => setFormData({...formData, eventName: e.target.value})} className="w-full py-2 font-bold text-xl outline-none uppercase bg-transparent text-slate-900 placeholder-slate-300" />
                         <label className="absolute left-0 -top-6 text-emerald-600 font-black text-[9px] uppercase tracking-widest">Event Title</label>
                       </div>
+                      
+                      {/* FIXED TIME INPUTS FOR MOBILE VISIBILITY */}
                       <div className="space-y-3">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Start Time</label>
-                        <input type="time" min="07:30" max="16:30" value={formData.startTime} onChange={e => setFormData({...formData, startTime: e.target.value})} className="w-full bg-slate-100 p-4 rounded-2xl font-bold text-lg outline-none border-2 border-slate-600 focus:border-emerald-500 transition-all" />
+                        <input 
+                          type="time" 
+                          min="07:30" 
+                          max="16:30" 
+                          value={formData.startTime} 
+                          onChange={e => setFormData({...formData, startTime: e.target.value})} 
+                          className="w-full bg-slate-100 p-4 rounded-2xl font-bold text-lg outline-none border-2 border-slate-600 focus:border-emerald-500 transition-all text-slate-900 color-[rgba(15,23,42,1)]" 
+                        />
                       </div>
                       <div className="space-y-3">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">End Time</label>
-                        <input type="time" min="07:30" max="16:30" value={formData.endTime} onChange={e => setFormData({...formData, endTime: e.target.value})} className="w-full bg-slate-100 p-4 rounded-2xl font-bold text-lg outline-none border-2 border-slate-600 focus:border-emerald-500 transition-all" />
+                        <input 
+                          type="time" 
+                          min="07:30" 
+                          max="16:30" 
+                          value={formData.endTime} 
+                          onChange={e => setFormData({...formData, endTime: e.target.value})} 
+                          className="w-full bg-slate-100 p-4 rounded-2xl font-bold text-lg outline-none border-2 border-slate-600 focus:border-emerald-500 transition-all text-slate-900 color-[rgba(15,23,42,1)]" 
+                        />
                       </div>
+                      
                       <div className="col-span-full mt-10 space-y-6">
                         {errorMsg && (
                           <div className="p-5 bg-rose-50 border border-rose-200 rounded-4xl flex items-center gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -264,7 +309,7 @@ export default function BookingPage() {
                           </div>
                         )}
                         <button onClick={handleSendOTP} disabled={loading} className="w-full py-6 bg-slate-900 text-white rounded-3xl font-black text-[12px] uppercase tracking-[0.4em] shadow-2xl active:scale-95 hover:bg-emerald-600 transition-all">
-                          {loading ? 'Processing...' : 'Confirm Booking'}
+                          {loading ? 'Validating Schedule...' : 'Confirm Booking'}
                         </button>
                       </div>
                     </div>
@@ -287,7 +332,7 @@ export default function BookingPage() {
             <div className="p-8 border-b border-slate-50 flex justify-between items-center bg-slate-900 text-white relative">
               <div>
                 <p className="text-[9px] font-black uppercase tracking-[0.4em] text-emerald-400 mb-1">Daily Agenda</p>
-                <h3 className="text-2xl font-light tracking-tighter uppercase italic">{format(selectedDate, 'MMM do')}</h3>
+                <h3 className="text-3xl font-black tracking-tighter uppercase italic leading-none">{format(selectedDate, 'MMM do')}</h3>
               </div>
               <button onClick={() => setIsPopupOpen(false)} className="w-10 h-10 flex items-center justify-center bg-white/10 rounded-2xl hover:bg-white/20 transition-colors"><X className="w-5 h-5" /></button>
             </div>
