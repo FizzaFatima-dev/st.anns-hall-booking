@@ -116,7 +116,6 @@ export default function Home() {
             </button>
           </div>
 
-          {/* Connected Floating Cards */}
           <div className="hidden lg:block space-y-4">
             {halls.slice(0, 3).map((hall, i) => (
               <Link 
@@ -197,7 +196,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* FOOTER - Restored Email and Location */}
+      {/* FOOTER */}
       <footer className="bg-slate-950 text-white py-20 px-6 md:px-10 overflow-hidden relative">
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12 relative z-10">
           <div className="col-span-1">
@@ -231,7 +230,6 @@ export default function Home() {
             </ul>
           </div>
 
-          {/* RESTORED CONTACT SECTION */}
           <div className="md:ml-auto">
             <h4 className="font-black text-[10px] uppercase tracking-[0.4em] mb-8 text-emerald-500">Contact</h4>
             <ul className="space-y-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">
@@ -242,6 +240,7 @@ export default function Home() {
                 </a>
               </li>
               <li>
+                {/* UPDATED LOCATION LINK */}
                 <a href="maps.google.com/maps?ll=17.393066,78.435646&z=15&t=m&hl=en&gl=IN&mapclient=embed&cid=3230818851375227641" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 hover:text-emerald-400 transition-colors group">
                   <MapPin className="w-4 h-4 text-emerald-500 group-hover:scale-110 transition-transform" /> 
                   Mehdipatnam, Hyderabad
