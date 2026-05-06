@@ -240,8 +240,13 @@ export default function Home() {
                 </a>
               </li>
               <li>
-                {/* UPDATED LOCATION LINK */}
-                <a href="maps.google.com/maps?ll=17.393066,78.435646&z=15&t=m&hl=en&gl=IN&mapclient=embed&cid=3230818851375227641" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 hover:text-emerald-400 transition-colors group">
+                {/* VERIFIED LOCATION LINK */}
+                <a 
+                  href="https://maps.app.goo.gl/yLz1uCndpmsXW5eZ8" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="flex items-center gap-3 hover:text-emerald-400 transition-colors group"
+                >
                   <MapPin className="w-4 h-4 text-emerald-500 group-hover:scale-110 transition-transform" /> 
                   Mehdipatnam, Hyderabad
                 </a>
