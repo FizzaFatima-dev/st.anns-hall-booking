@@ -242,7 +242,7 @@ export default function Home() {
                 </a>
               </li>
               <li>
-                <a href="https://maps.app.goo.gl/9uT2yL6R1f8C1D6v5" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 hover:text-emerald-400 transition-colors group">
+                <a href="maps.google.com/maps?ll=17.393066,78.435646&z=15&t=m&hl=en&gl=IN&mapclient=embed&cid=3230818851375227641" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 hover:text-emerald-400 transition-colors group">
                   <MapPin className="w-4 h-4 text-emerald-500 group-hover:scale-110 transition-transform" /> 
                   Mehdipatnam, Hyderabad
                 </a>
