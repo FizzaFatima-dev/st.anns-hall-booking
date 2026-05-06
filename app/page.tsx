@@ -214,8 +214,10 @@ export default function Home() {
           <div className="md:ml-auto">
             <h4 className="font-black text-[10px] uppercase tracking-[0.4em] mb-8 text-emerald-500">Navigation</h4>
             <ul className="space-y-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-              <li><button onClick={scrollToTop} className="hover:text-white transition-colors cursor-pointer">The Portal</button></li>
+              <li><button onClick={scrollToTop} className="hover:text-white transition-colors cursor-pointer">Home</button></li>
               <li><button onClick={scrollToAvailability} className="hover:text-white transition-colors cursor-pointer">Venues</button></li>
+              {/* ADDED ADMIN PORTAL LINK */}
+              <li><a href="https://st-anns-hall-booking.vercel.app/admin" className="hover:text-white transition-colors">Admin Portal</a></li>
             </ul>
           </div>
 
@@ -234,16 +236,14 @@ export default function Home() {
             <h4 className="font-black text-[10px] uppercase tracking-[0.4em] mb-8 text-emerald-500">Contact</h4>
             <ul className="space-y-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">
               <li>
-                {/* FIXED MAIL LINK WITH HTTPS */}
                 <a href="https://mail.google.com/mail/?view=cm&fs=1&to=info@stannscollegehyd.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 hover:text-emerald-400 transition-colors group">
                   <Mail className="w-4 h-4 text-emerald-500 group-hover:scale-110 transition-transform" /> 
                   info@stannscollegehyd.com
                 </a>
               </li>
               <li>
-                {/* FIXED MAP LINK WITH HTTPS TO OFFICIAL COLLEGE LOCATION */}
                 <a 
-                  href="https://www.google.com/maps/place/St.+Ann's+College+for+Women/@17.393066,78.435646,15z" 
+                  href="https://maps.app.goo.gl/3QWjG9h7K4rJv9pA9" 
                   target="_blank" 
                   rel="noopener noreferrer" 
                   className="flex items-center gap-3 hover:text-emerald-400 transition-colors group"
