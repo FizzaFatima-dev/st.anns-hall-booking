@@ -3,26 +3,66 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { 
-  Trash2, Calendar, Clock, Shield, Search, Download, Lock, X, Filter, LayoutGrid, User, Layers, Inbox
+  CheckCircle, XCircle, Clock, Calendar, 
+  Trash2, ShieldCheck, Inbox, Search, Filter
 } from 'lucide-react';
+import { format } from 'date-fns';
 
-export default function AdminPortal() {
-  const [bookings, setBookings] = useState<any[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterHall, setFilterHall] = useState('All');
-  const [showPastEvents, setShowPastEvents] = useState(false);
-  const [isAuthorized, setIsAuthorized] = useState(false);
-  const [password, setPassword] = useState('');
+interface Booking {
+  id: string | number;
+  hall_id: string | number;
+  event_name: string;
+  booking_date: string;
+  start_time: string;
+  end_time: string;
+  user_name: string;
+  user_email: string;
+  department: string;
+  status: string;
+  halls?: { name: string };
+}
 
-  const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
+export default function AdminDashboard() {
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<string>('All');
 
-  const formatHallName = (name: string): string => {
-    if (!name) return '';
-    if (name === "Seminar Hall 1") return "Gnanamma Hall";
-    if (name === "Seminar Hall 2") return "Deickmann Hall";
-    if (name.includes("Auditorium")) return "St. Joseph's Auditorium";
-    return name;
-  };
+  useEffect(() => {
+    fetchAdminBookings();
+  }, []);
+
+  async function fetchAdminBookings() {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('bookings')
+      .select('*, halls(name)')
+      .order('booking_date', { ascending: false });
+    
+    if (!error && data) {
+      setBookings(data);
+    }
+    setLoading(false);
+  }
+
+  async function updateStatus(id: string | number, nextStatus: 'Confirmed' | 'Rejected') {
+    const { error } = await supabase
+      .from('bookings')
+      .update({ status: nextStatus })
+      .eq('id', id);
+
+    if (!error) {
+      setBookings(prev => prev.map(b => b.id === id ? { ...b, status: nextStatus } : b));
+    }
+  }
+
+  async function deleteBooking(id: string | number) {
+    if (!confirm("Are you sure you want to permanently delete this reservation record?")) return;
+    const { error } = await supabase.from('bookings').delete().eq('id', id);
+    if (!error) {
+      setBookings(prev => prev.filter(b => b.id !== id));
+    }
+  }
 
   const formatTo12Hr = (timeStr: string): string => {
     if (!timeStr) return '';
@@ -33,236 +73,171 @@ export default function AdminPortal() {
     return `${h}:${minutes} ${ampm}`;
   };
 
-  useEffect(() => {
-    if (isAuthorized) fetchData();
-  }, [isAuthorized]);
-
-  async function fetchData() {
-    const { data } = await supabase
-      .from('bookings')
-      .select('*, halls(name)')
-      .order('booking_date', { ascending: false }) 
-      .order('start_time', { ascending: true });
-    
-    if (data) setBookings(data);
-  }
-
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (password === ADMIN_PASSWORD) setIsAuthorized(true);
-    else alert("Incorrect control gate token password validation verification.");
-  };
-
-  const handleDelete = async (id: string) => {
-    if (confirm("Permanently drop and wipe this scheduling index reference row?")) {
-      const { error } = await supabase.from('bookings').delete().eq('id', id);
-      if (!error) fetchData();
-    }
-  };
-
   const filteredBookings = bookings.filter(b => {
-    const today = new Date().toISOString().split('T')[0];
-    const isPast = b.booking_date < today;
-    
-    const formattedName = formatHallName(b.halls?.name || '');
-
     const matchesSearch = 
-      b.event_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      b.department?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      b.user_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      formattedName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      b.booking_date?.includes(searchTerm);
-
-    const matchesHall = filterHall === 'All' || formattedName === filterHall;
-
-    if (!showPastEvents && isPast) return false;
-    return matchesSearch && matchesHall;
+      b.event_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      b.user_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      b.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (b.halls?.name || '').toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === 'All' || b.status === statusFilter;
+    return matchesSearch && matchesStatus;
   });
 
-  const resetFilters = () => {
-    setSearchTerm('');
-    setFilterHall('All');
-  };
-
-  if (!isAuthorized) {
+  if (loading) {
     return (
-      <div className="min-h-screen bg-[#0F172A] flex items-center justify-center p-6 font-sans">
-        <form onSubmit={handleLogin} className="bg-slate-900 border border-slate-800 p-8 rounded-3xl w-full max-w-md shadow-2xl text-center">
-          <div className="bg-emerald-500/10 w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-5 text-emerald-500 border border-emerald-500/20">
-            <Lock size={24} />
-          </div>
-          <h2 className="text-white text-xl font-bold tracking-tight mb-1">Administrative Gateway</h2>
-          <p className="text-slate-500 text-xs font-medium mb-6">Enter secure access token</p>
-          <input 
-            type="password" 
-            placeholder="System Passcode"
-            className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 px-4 text-sm text-white mb-4 focus:border-emerald-500 outline-none transition-all"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 rounded-xl text-sm tracking-wide transition-all shadow-lg">
-            Authorize Node Access
-          </button>
-        </form>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center font-sans font-medium tracking-wider text-slate-500 animate-pulse">
+        Loading Administrative Ledger...
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0F172A] text-slate-200 p-4 md:p-10 font-sans print:bg-white">
-      
-      {/* ACTION HUB TOP BAR */}
-      <div className="max-w-7xl mx-auto mb-8 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 print:hidden">
-        <div>
-          <div className="flex items-center gap-2.5 mb-1">
-            <Shield className="text-emerald-500" size={24} />
-            <h1 className="text-2xl font-bold tracking-tight text-white">
-              Admin Control Panel
-            </h1>
+    <div className="min-h-screen bg-slate-50 text-slate-800 font-sans antialiased">
+      {/* Header Banner */}
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-30">
+        <div className="max-w-7xl mx-auto px-6 py-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center text-white shadow-md shadow-emerald-200">
+              <ShieldCheck className="w-5 h-5" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-slate-900 tracking-tight">Admin Control Panel</h1>
+              <p className="text-xs text-slate-500 font-medium">Manage and audit institutional venue schedules</p>
+            </div>
           </div>
-          <p className="text-slate-500 font-medium text-xs">Live Database Operations Console</p>
         </div>
+      </header>
 
-        {/* INPUT LAYOUT BAR ACCENTS */}
-        <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-          <div className="relative flex-grow sm:flex-grow-0 sm:w-60">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600" size={14} />
+      <main className="max-w-7xl mx-auto px-6 py-8">
+        {/* Controls Bar */}
+        <div className="flex flex-col md:flex-row gap-4 items-center justify-between mb-6">
+          <div className="relative w-full md:w-96">
+            <Search className="absolute left-4 top-3.5 w-4 h-4 text-slate-400" />
             <input 
               type="text" 
-              placeholder="Search bookings indexes..." 
-              className="w-full bg-slate-900 border border-slate-800 rounded-xl py-2.5 pl-9 pr-9 text-xs focus:border-emerald-500 outline-none transition-all text-white"
+              placeholder="Search event, host, or department..." 
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="w-full bg-white border border-slate-200 rounded-xl pl-11 pr-4 py-3 text-sm text-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all shadow-sm"
             />
-            {searchTerm && (
-              <button onClick={() => setSearchTerm('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white">
-                <X size={12} />
-              </button>
-            )}
           </div>
 
-          <div className="flex bg-slate-900 p-1 rounded-xl border border-slate-800 overflow-x-auto no-scrollbar">
-            {['All', "St. Joseph's Auditorium", 'Gnanamma Hall', 'Deickmann Hall'].map((hall) => (
-              <button
-                key={hall}
-                onClick={() => setFilterHall(hall)}
-                className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all whitespace-nowrap ${
-                  filterHall === hall
-                    ? 'bg-slate-800 text-white border border-slate-700/50 shadow'
-                    : 'text-slate-500 hover:text-slate-300'
-                }`}
-              >
-                {hall === 'All' ? 'All' : hall.replace(' Hall', '')}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button 
-              onClick={() => setSearchTerm(new Date().toISOString().split('T')[0])}
-              className="bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 px-3 py-2 rounded-xl font-semibold text-xs transition-all flex items-center gap-1.5"
+          <div className="flex items-center gap-2 w-full md:w-auto justify-end">
+            <Filter className="w-4 h-4 text-slate-400 hidden sm:inline" />
+            <select 
+              value={statusFilter} 
+              onChange={e => setStatusFilter(e.target.value)}
+              className="w-full sm:w-44 bg-white border border-slate-200 rounded-xl px-3 py-3 text-sm text-slate-700 font-medium outline-none focus:border-emerald-500 transition-all shadow-sm"
             >
-              <Filter size={13} /> Today
-            </button>
-
-            <button 
-              onClick={() => setShowPastEvents(!showPastEvents)}
-              className={`px-3 py-2 rounded-xl font-semibold text-xs transition-all border ${
-                showPastEvents ? 'bg-emerald-600/20 text-emerald-400 border-emerald-500/30' : 'bg-slate-900 text-slate-400 border-slate-800'
-              }`}
-            >
-              {showPastEvents ? 'Showing Past logs' : 'Hiding Past'}
-            </button>
-
-            <button onClick={() => window.print()} className="bg-slate-900 p-2 rounded-xl border border-slate-800 text-slate-500 hover:text-white transition-all">
-              <Download size={14} />
-            </button>
+              <option value="All">All Reservations</option>
+              <option value="Confirmed">Confirmed</option>
+              <option value="Pending">Pending</option>
+              <option value="Rejected">Rejected</option>
+            </select>
           </div>
         </div>
-      </div>
 
-      <div className="max-w-7xl mx-auto mb-4 flex items-center justify-between px-2 print:hidden">
-        <div className="flex items-center gap-3">
-            <span className="text-xs font-semibold text-slate-500">
-                {filteredBookings.length} Active Query Matches
-            </span>
-            {(searchTerm || filterHall !== 'All') && (
-                <button 
-                    onClick={resetFilters}
-                    className="text-xs font-medium text-rose-400 flex items-center gap-0.5 hover:underline"
-                >
-                    <X size={12} /> Reset System State
-                </button>
-            )}
-        </div>
-      </div>
+        {/* Dense Ledger Table */}
+        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                  <th className="py-4 px-6">Event & Venue</th>
+                  <th className="py-4 px-6">Host / Department</th>
+                  <th className="py-4 px-6">Date</th>
+                  <th className="py-4 px-6">Schedule Window</th>
+                  <th className="py-4 px-6">Status</th>
+                  <th className="py-4 px-6 text-right">Administrative Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-sm text-slate-700">
+                {filteredBookings.map((b) => (
+                  <tr key={b.id} className="hover:bg-slate-50/60 transition-colors">
+                    {/* Event & Venue */}
+                    <td className="py-4 px-6">
+                      <p className="font-semibold text-slate-900">{b.event_name}</p>
+                      <p className="text-xs text-slate-400 font-medium mt-0.5">{b.halls?.name || 'Unknown Venue'}</p>
+                    </td>
+                    
+                    {/* Host & Department */}
+                    <td className="py-4 px-6">
+                      <p className="font-medium text-slate-800">{b.user_name}</p>
+                      <p className="text-xs text-slate-400 font-normal mt-0.5">{b.department}</p>
+                    </td>
 
-      {/* DYNAMIC COMPACT MATRIX GRID CARD SYSTEM REPLACE STANDARD BLANK ROWS */}
-      <div className="max-w-7xl mx-auto">
-        {filteredBookings.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredBookings.map((b) => {
-              const todayStr = new Date().toISOString().split('T')[0];
-              const isPast = b.booking_date < todayStr;
-              const isToday = b.booking_date === todayStr;
+                    {/* Date */}
+                    <td className="py-4 px-6 font-medium whitespace-nowrap text-slate-600">
+                      {format(new Date(b.booking_date), 'MMM dd, yyyy')}
+                    </td>
 
-              return (
-                <div key={b.id} className={`bg-slate-900/50 backdrop-blur-xl border rounded-2xl p-5 flex flex-col justify-between gap-5 transition-all relative group ${
-                  isPast ? 'opacity-40 border-slate-900' : 
-                  isToday ? 'border-emerald-500/40 shadow-lg shadow-emerald-500/[0.02]' : 
-                  'border-slate-800 hover:border-slate-700'
-                }`}>
-                  <div className="space-y-3">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <h3 className="text-base font-bold text-white group-hover:text-emerald-400 transition-colors leading-tight">{b.event_name}</h3>
-                        <p className="text-xs font-semibold text-slate-500 mt-0.5">{formatHallName(b.halls?.name || '')}</p>
-                      </div>
-                      {isToday && <span className="text-[9px] bg-emerald-600 text-white font-extrabold tracking-wider px-2 py-0.5 rounded-md shadow animate-pulse">TODAY</span>}
-                    </div>
+                    {/* Time Schedule */}
+                    <td className="py-4 px-6 whitespace-nowrap font-medium text-slate-600">
+                      {formatTo12Hr(b.start_time)} - {formatTo12Hr(b.end_time)}
+                    </td>
 
-                    <div className="space-y-1.5 pt-1">
-                      <div className="flex items-center gap-2 text-xs font-medium text-slate-400">
-                        <Calendar size={13} className="text-slate-600" />
-                        <span>{b.booking_date}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs font-medium text-slate-400">
-                        <Clock size={13} className="text-slate-600" />
-                        <span>{formatTo12Hr(b.start_time)} - {formatTo12Hr(b.end_time)}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="border-t border-slate-800/80 pt-3 flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-7 h-7 bg-slate-800 border border-slate-700/50 rounded-lg flex items-center justify-center shrink-0"><User size={13} className="text-slate-400" /></div>
-                      <div className="min-w-0">
-                        <p className="text-xs font-bold text-slate-300 truncate leading-none">{b.user_name}</p>
-                        <p className="text-[10px] text-slate-500 truncate mt-0.5">{b.user_email}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/5 border border-emerald-500/10 px-2 py-0.5 rounded">
-                        {b.department.substring(0,6)}
+                    {/* Status Pill */}
+                    <td className="py-4 px-6">
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                        b.status === 'Confirmed' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' :
+                        b.status === 'Rejected' ? 'bg-rose-50 text-rose-700 border border-rose-100' :
+                        'bg-amber-50 text-amber-700 border border-amber-100'
+                      }`}>
+                        {b.status === 'Confirmed' && <CheckCircle size={12} />}
+                        {b.status === 'Rejected' && <XCircle size={12} />}
+                        {(!b.status || b.status === 'Pending') && <Clock size={12} />}
+                        {b.status || 'Pending'}
                       </span>
-                      <button onClick={() => handleDelete(b.id)} className="p-1.5 text-slate-500 hover:text-rose-400 transition-colors bg-slate-950 border border-slate-800 rounded-lg">
-                        <Trash2 size={13}/>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+                    </td>
+
+                    {/* Action Tools */}
+                    <td className="py-4 px-6 text-right whitespace-nowrap">
+                      <div className="flex items-center justify-end gap-2">
+                        {b.status !== 'Confirmed' && (
+                          <button 
+                            onClick={() => updateStatus(b.id, 'Confirmed')}
+                            className="p-1.5 text-emerald-600 hover:bg-emerald-50 border border-transparent hover:border-emerald-200 rounded-lg transition-all"
+                            title="Approve Booking"
+                          >
+                            <CheckCircle size={16} />
+                          </button>
+                        )}
+                        {b.status !== 'Rejected' && (
+                          <button 
+                            onClick={() => updateStatus(b.id, 'Rejected')}
+                            className="p-1.5 text-amber-600 hover:bg-amber-50 border border-transparent hover:border-amber-200 rounded-lg transition-all"
+                            title="Reject Booking"
+                          >
+                            <XCircle size={16} />
+                          </button>
+                        )}
+                        <div className="w-px h-4 bg-slate-200 mx-1" />
+                        <button 
+                          onClick={() => deleteBooking(b.id)}
+                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-100 rounded-lg transition-all"
+                          title="Delete Record"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+
+                {filteredBookings.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="py-12 text-center text-slate-400">
+                      <Inbox className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                      <p className="text-sm font-medium">No matching reservations found</p>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
-        ) : (
-          <div className="text-center py-20 bg-slate-900/20 border border-dashed border-slate-800 rounded-2xl">
-              <Inbox className="w-8 h-8 text-slate-700 mx-auto mb-3" />
-              <p className="text-xs text-slate-500 font-medium tracking-wide">No scheduling records found corresponding to filters</p>
-              <button onClick={resetFilters} className="mt-3 text-emerald-400 text-xs font-semibold hover:underline">Reset layout variables</button>
-          </div>
-        )}
-      </div>
+        </div>
+      </main>
     </div>
   );
 }
