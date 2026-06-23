@@ -7,7 +7,7 @@ import {
   eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, isBefore, startOfDay
 } from 'date-fns';
 import { 
-  ChevronLeft, ChevronRight, Building2, CheckCircle2, 
+  ChevronLeft, ChevronRight, CheckCircle2, 
   ArrowLeft, X, Plus, AlertCircle, MapPin, Clock, Calendar
 } from 'lucide-react';
 
@@ -77,7 +77,6 @@ export default function BookingPage() {
 
     setLoading(true);
 
-    // --- CONFLICT CHECK LOGIC ---
     const formattedDate = format(selectedDate!, 'yyyy-MM-dd');
     const { data: conflicts, error: checkError } = await supabase
       .from('bookings')
@@ -187,6 +186,9 @@ export default function BookingPage() {
   const monthStart = startOfMonth(currentDate);
   const calendarDays = eachDayOfInterval({ start: startOfWeek(monthStart), end: endOfWeek(endOfMonth(monthStart)) });
   const todayDate = startOfDay(new Date());
+  
+  // Array generated for weekday matrix reference headers
+  const weekDaysHeader = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
@@ -207,12 +209,11 @@ export default function BookingPage() {
                 <button onClick={() => router.push('/')} className="flex items-center gap-2 text-slate-400 hover:text-emerald-600 mb-8 font-bold text-[10px] uppercase tracking-[0.4em] transition-all group">
                     <ArrowLeft className="w-4 h-4 group-hover:-translate-x-2 transition-transform" /> Back to Halls
                 </button>
-                {/* SOPHISTICATED TYPOGRAPHY */}
                 <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-slate-900 uppercase leading-tight">{hall.name}</h1>
               </div>
               <div className="flex gap-4 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
-                <div className="flex items-center gap-3 bg-white px-5 py-2.5 rounded-2xl border border-slate-100 shadow-sm shrink-0"><div className="w-2 h-2 rounded-full bg-emerald-500" /><span className="text-[9px] font-bold uppercase text-slate-600 tracking-widest">Available</span></div>
-                <div className="flex items-center gap-3 bg-white px-5 py-2.5 rounded-2xl border border-slate-100 shadow-sm shrink-0"><div className="w-2 h-2 rounded-full bg-rose-400 animate-pulse" /><span className="text-[9px] font-bold uppercase text-slate-600 tracking-widest">Reserved</span></div>
+                <div className="flex items-center gap-3 bg-white px-5 py-2.5 rounded-2xl border border-slate-100 shadow-sm shrink-0"><div className="w-2.5 h-2.5 rounded-full bg-emerald-500" /><span className="text-[9px] font-bold uppercase text-slate-600 tracking-widest">Available</span></div>
+                <div className="flex items-center gap-3 bg-white px-5 py-2.5 rounded-2xl border border-slate-100 shadow-sm shrink-0"><div className="w-2.5 h-2.5 rounded-full bg-rose-400 animate-pulse" /><span className="text-[9px] font-bold uppercase text-slate-600 tracking-widest">Reserved</span></div>
               </div>
             </div>
 
@@ -226,7 +227,16 @@ export default function BookingPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-7 border-l border-t border-slate-50">
+              {/* Day-of-Week headers added here */}
+              <div className="grid grid-cols-7 border-l border-b border-slate-100 bg-slate-50/50">
+                {weekDaysHeader.map((dayName, idx) => (
+                  <div key={idx} className="py-4 text-center border-r border-slate-100">
+                    <span className="text-[10px] font-bold uppercase text-slate-400 tracking-[0.2em]">{dayName}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-7 border-l">
                 {calendarDays.map((day, idx) => {
                   const dayBookings = bookings.filter(b => isSameDay(new Date(b.booking_date), day));
                   const isCurrentMonth = isSameMonth(day, monthStart);
@@ -237,11 +247,22 @@ export default function BookingPage() {
                     <div 
                       key={idx} 
                       onClick={() => { if (isCurrentMonth && !isPast) { setSelectedDate(day); setIsPopupOpen(true); } }}
-                      className={`min-h-20 md:min-h-40 p-2 md:p-6 border-b border-r border-slate-50 transition-all group relative cursor-pointer ${!isCurrentMonth || isPast ? 'opacity-20 bg-slate-50/10 cursor-not-allowed' : 'hover:bg-emerald-50/30'}`}
+                      className={`min-h-20 md:min-h-40 p-2 md:p-6 border-b border-r border-slate-100 transition-all group relative ${!isCurrentMonth || isPast ? 'opacity-30 bg-slate-100/40 cursor-not-allowed select-none' : 'hover:bg-emerald-50/30 cursor-pointer'}`}
                     >
-                      <span className={`text-sm md:text-lg font-bold w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-xl md:rounded-2xl mb-2 transition-all ${isToday ? 'bg-emerald-500 text-white shadow-xl' : 'text-slate-900 group-hover:text-emerald-600'}`}>{format(day, 'd')}</span>
-                      {dayBookings.length > 0 && isCurrentMonth && <div className="mt-auto hidden md:block"><div className="inline-flex items-center gap-2 px-3 py-1.5 bg-rose-50 border border-rose-100 rounded-xl"><div className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse" /><span className="text-[9px] font-bold uppercase text-rose-600 tracking-tighter">{dayBookings.length} Events</span></div></div>}
-                      {dayBookings.length > 0 && isCurrentMonth && <div className="md:hidden w-1.5 h-1.5 rounded-full bg-rose-400 mx-auto" />}
+                      <span className={`text-sm md:text-lg font-bold w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-xl md:rounded-2xl mb-2 transition-all ${isToday ? 'bg-emerald-500 text-white shadow-xl shadow-emerald-500/20' : 'text-slate-800 group-hover:text-emerald-600'}`}>{format(day, 'd')}</span>
+                      
+                      {/* Refactored Clean Event Badges */}
+                      {dayBookings.length > 0 && isCurrentMonth && (
+                        <div className="mt-auto hidden md:block">
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-rose-50 border border-rose-100 rounded-xl">
+                            <div className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse" />
+                            <span className="text-[9px] font-extrabold uppercase text-rose-600 tracking-wider">
+                              {dayBookings.length} {dayBookings.length === 1 ? 'Event' : 'Events'}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                      {dayBookings.length > 0 && isCurrentMonth && <div className="md:hidden w-1.5 h-1.5 rounded-full bg-rose-400 mx-auto mt-2" />}
                     </div>
                   );
                 })}
