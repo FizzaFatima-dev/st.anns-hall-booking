@@ -9,7 +9,7 @@ import {
 } from 'date-fns';
 import { 
   ChevronLeft, ChevronRight, CheckCircle2, 
-  ArrowLeft, X, Plus, AlertCircle, MapPin, Clock, Calendar, Filter, Download
+  ArrowLeft, X, Plus, AlertCircle, MapPin, Clock, Calendar
 } from 'lucide-react';
 
 interface Hall {
@@ -28,7 +28,6 @@ interface Booking {
   user_email?: string;
   department: string;
   status?: string;
-  event_type?: 'academic' | 'cultural'; // Feature 1: Dual-tone categorization
 }
 
 export default function BookingPage() {
@@ -46,24 +45,9 @@ export default function BookingPage() {
   const [loading, setLoading] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Feature 1 States: Filter states for category tracking
-  const [eventTypeFilter, setEventTypeFilter] = useState<'all' | 'academic' | 'cultural'>('all');
-
   const [formData, setFormData] = useState({
-    fullName: '', 
-    email: '', 
-    dept: '', 
-    eventName: '', 
-    startTime: '09:00', 
-    endTime: '13:00',
-    eventType: 'academic' as 'academic' | 'cultural'
+    fullName: '', email: '', dept: '', eventName: '', startTime: '', endTime: ''
   });
-
-  // Feature 3: Defined Time-slot breakdown configurations
-  const timeSlots = [
-    { label: "Morning Session", start: "07:30", end: "12:00" },
-    { label: "Afternoon Session", start: "12:00", end: "16:30" }
-  ];
 
   const formatTo12Hr = (timeStr: string): string => {
     if (!timeStr) return '';
@@ -72,22 +56,6 @@ export default function BookingPage() {
     const ampm = h >= 12 ? 'PM' : 'AM';
     h = h % 12 || 12;
     return `${h}:${minutes} ${ampm}`;
-  };
-
-  // Feature 4: Google Calendar Direct Link Generator
-  const generateGoogleCalendarLink = () => {
-    if (!selectedDate || !hall) return '#';
-    const base = "https://calendar.google.com/calendar/render?action=TEMPLATE";
-    const dateStr = format(selectedDate, 'yyyyMMdd');
-    const startClean = formData.startTime.replace(':', '') + '00';
-    const endClean = formData.endTime.replace(':', '') + '00';
-    
-    const text = encodeURIComponent(`[${formData.eventType.toUpperCase()}] ${formData.eventName}`);
-    const dates = `${dateStr}T${startClean}/${dateStr}T${endClean}`;
-    const details = encodeURIComponent(`Organized by ${formData.fullName} (${formData.dept}) via St. Ann's Portal.`);
-    const location = encodeURIComponent(hall.name);
-
-    return `${base}&text=${text}&dates=${dates}&details=${details}&location=${location}`;
   };
 
   useEffect(() => {
@@ -132,11 +100,12 @@ export default function BookingPage() {
     }
 
     setLoading(true);
+
     const formattedDate = format(selectedDate, 'yyyy-MM-dd');
     const normStart = formData.startTime.length === 5 ? `${formData.startTime}:00` : formData.startTime;
     const normEnd = formData.endTime.length === 5 ? `${formData.endTime}:00` : formData.endTime;
 
-    const { data: conflicts } = await supabase
+    const { data: conflicts, error: checkError } = await supabase
       .from('bookings')
       .select('event_name, start_time, end_time')
       .eq('hall_id', id)
@@ -144,9 +113,15 @@ export default function BookingPage() {
       .lt('start_time', normEnd)
       .gt('end_time', normStart);
 
+    if (checkError) {
+      setLoading(false);
+      setErrorMsg("Database Error: Could not verify availability.");
+      return;
+    }
+
     if (conflicts && conflicts.length > 0) {
       setLoading(false);
-      setErrorMsg(`Schedule Conflict: This time overlaps with "${conflicts[0].event_name}" (${formatTo12Hr(conflicts[0].start_time)} - ${formatTo12Hr(conflicts[0].end_time)}).`);
+      setErrorMsg(`Schedule Conflict: Overlaps with "${conflicts[0].event_name}" (${formatTo12Hr(conflicts[0].start_time)} - ${formatTo12Hr(conflicts[0].end_time)}).`);
       return;
     }
 
@@ -173,8 +148,7 @@ export default function BookingPage() {
     const { error: bookingError } = await supabase.from('bookings').insert([{
       hall_id: id, event_name: formData.eventName, booking_date: format(selectedDate, 'yyyy-MM-dd'),
       start_time: insertStart, end_time: insertEnd, user_name: formData.fullName,
-      user_email: formData.email.toLowerCase(), email: formData.email.toLowerCase(), department: formData.dept, 
-      status: 'Confirmed', event_type: formData.eventType
+      user_email: formData.email.toLowerCase(), department: formData.dept, status: 'Confirmed'
     }]);
 
     setLoading(false);
@@ -189,57 +163,50 @@ export default function BookingPage() {
     }
   };
 
-  if (!hall) return <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center font-bold uppercase tracking-[0.4em] text-slate-300 animate-pulse">Loading...</div>;
+  if (!hall) return <div className="min-h-screen bg-slate-50 flex items-center justify-center font-semibold text-xs tracking-[0.2em] text-slate-400 animate-pulse tracking-widest">LOADING...</div>;
 
-  // Render Page State: Success View
   if (isSuccess) {
     return (
-      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-6">
-        <div className="max-w-md w-full bg-white rounded-[3rem] shadow-3xl border border-slate-100 overflow-hidden animate-in zoom-in duration-500">
-          <div className="bg-emerald-600 p-10 text-white text-center">
-            <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4 rotate-3"><CheckCircle2 className="w-8 h-8" /></div>
-            <h2 className="text-2xl font-bold uppercase italic tracking-widest">Booking Confirmed</h2>
-            <p className="text-[10px] uppercase tracking-[0.3em] opacity-80 mt-1">Transaction Successful</p>
+      <div className="min-h-screen bg-slate-50/50 flex items-center justify-center p-6 antialiased selection:bg-emerald-500/10">
+        <div className="max-w-md w-full bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden animate-in zoom-in-95 duration-300">
+          <div className="bg-slate-900 p-8 text-center relative">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl" />
+            <div className="w-12 h-12 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-inner"><CheckCircle2 className="w-5 h-5" /></div>
+            <h2 className="text-xl font-bold text-white tracking-tight">Booking Receipt</h2>
+            <p className="text-xs text-slate-400 mt-1">Transaction Completed Successfully</p>
           </div>
-          <div className="p-8 space-y-6">
+          <div className="p-6 space-y-5">
             <div className="space-y-4">
-               <div className="flex justify-between items-start border-b border-slate-50 pb-4">
-                  <div className="space-y-1">
-                    <p className="text-[9px] font-bold uppercase text-slate-400 tracking-widest">Event Name</p>
-                    <p className="text-lg font-bold text-slate-900 uppercase leading-tight">{formData.eventName}</p>
-                  </div>
-                  <span className={`px-3 py-1 rounded-full text-[8px] font-bold uppercase tracking-wider ${formData.eventType === 'academic' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-purple-50 text-purple-700 border border-purple-200'}`}>
-                    {formData.eventType}
-                  </span>
+               <div className="border-b border-slate-100 pb-4">
+                    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Event Name</p>
+                    <p className="text-base font-bold text-slate-900 mt-0.5">{formData.eventName}</p>
                </div>
-               <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                    <Calendar className="w-4 h-4 text-emerald-600 mb-2" />
-                    <p className="text-[8px] font-bold uppercase text-slate-400 tracking-widest">Date</p>
-                    <p className="text-[11px] font-bold text-slate-900">{selectedDate ? format(selectedDate, 'MMM do, yyyy') : ''}</p>
+               <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-slate-50/70 p-3.5 rounded-2xl border border-slate-100">
+                    <Calendar className="w-4 h-4 text-slate-400 mb-1.5" />
+                    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Date</p>
+                    <p className="text-xs font-bold text-slate-900 mt-0.5">{selectedDate ? format(selectedDate, 'MMM do, yyyy') : ''}</p>
                   </div>
-                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                    <Clock className="w-4 h-4 text-emerald-600 mb-2" />
-                    <p className="text-[8px] font-bold uppercase text-slate-400 tracking-widest">Time Slot</p>
-                    <p className="text-[11px] font-bold text-slate-900">{formatTo12Hr(formData.startTime)} - {formatTo12Hr(formData.endTime)}</p>
+                  <div className="bg-slate-50/70 p-3.5 rounded-2xl border border-slate-100">
+                    <Clock className="w-4 h-4 text-slate-400 mb-1.5" />
+                    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Time Slot</p>
+                    <p className="text-xs font-bold text-slate-900 mt-0.5">{formatTo12Hr(formData.startTime)} - {formatTo12Hr(formData.endTime)}</p>
+                  </div>
+               </div>
+               <div className="bg-slate-50/70 p-4 rounded-2xl border border-slate-100 flex items-center gap-3">
+                  <div className="w-9 h-9 bg-white border border-slate-100 rounded-xl flex items-center justify-center shadow-sm"><MapPin className="text-emerald-500 w-4 h-4" /></div>
+                  <div>
+                    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Venue</p>
+                    <p className="text-xs font-bold text-slate-900 mt-0.5">{hall.name}</p>
                   </div>
                </div>
             </div>
-            
-            {/* Feature 4 Implementation: Live Instant Sync Button Layout */}
-            <div className="pt-2 space-y-3">
-              <a 
-                href={generateGoogleCalendarLink()} 
-                target="_blank" 
-                rel="noreferrer" 
-                className="w-full py-4 bg-blue-50 text-blue-700 border border-blue-200 rounded-2xl font-bold text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-2 hover:bg-blue-100/70 transition-all shadow-sm"
-              >
-                <Download className="w-4 h-4" /> Sync to Google Calendar
-              </a>
-              <button onClick={() => router.push('/')} className="w-full py-5 bg-slate-900 text-white rounded-2xl font-bold text-[10px] uppercase tracking-[0.3em] hover:bg-emerald-600 transition-all shadow-xl">
-                Return to Portal
-              </button>
+            <div className="pt-2">
+              <button onClick={() => router.push('/')} className="w-full py-3.5 bg-slate-900 text-white rounded-xl font-medium text-xs tracking-wide hover:bg-slate-800 transition-all shadow-md active:scale-[0.99]">Return to Portal</button>
             </div>
+          </div>
+          <div className="bg-slate-50 p-3 text-center border-t border-slate-100">
+             <p className="text-[10px] font-medium text-slate-400 tracking-wide">St. Ann's Hall Booking System</p>
           </div>
         </div>
       </div>
@@ -250,71 +217,46 @@ export default function BookingPage() {
   const calendarDays = eachDayOfInterval({ start: startOfWeek(monthStart), end: endOfWeek(endOfMonth(monthStart)) });
   const todayDate = startOfDay(new Date());
 
-  // Filter logic processing based on Selection state
-  const filteredBookings = bookings.filter(b => {
-    if (eventTypeFilter === 'all') return true;
-    return b.event_type === eventTypeFilter || (!b.event_type && eventTypeFilter === 'academic');
-  });
-
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
-      <nav className="bg-white border-b border-slate-100 px-6 md:px-12 py-6 sticky top-0 z-40 flex justify-between items-center bg-white/80 backdrop-blur-md">
+    <div className="min-h-screen bg-slate-50/40 antialiased selection:bg-emerald-500/10">
+      <nav className="bg-white/80 backdrop-blur-md border-b border-slate-100 px-6 md:px-12 py-4 sticky top-0 z-40 flex justify-between items-center transition-all">
         <div className="flex items-center gap-3 cursor-pointer" onClick={() => router.push('/')}>
-          <div className="w-10 h-10 bg-emerald-500 rounded-2xl flex items-center justify-center shadow-lg overflow-hidden">
+          <div className="w-8 h-8 bg-emerald-500 rounded-xl flex items-center justify-center shadow-md shadow-emerald-500/10 overflow-hidden">
              <img src="/favicon.ico" alt="Logo" className="w-full h-full object-contain p-1" />
           </div>
-          <span className="text-2xl font-bold tracking-tighter text-slate-900 uppercase">St. Ann's</span>
+          <span className="text-lg font-bold tracking-tight text-slate-900">St. Ann's</span>
         </div>
       </nav>
 
-      <div className="max-w-7xl mx-auto px-6 md:px-12 pt-8 md:pt-16 pb-24">
+      <div className="max-w-6xl mx-auto px-6 md:px-12 pt-8 pb-20">
         {!isRegistering ? (
           <>
-            <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-8">
-              <div className="w-full md:w-auto">
-                <button onClick={() => router.push('/')} className="flex items-center gap-2 text-slate-400 hover:text-emerald-600 mb-6 font-bold text-[10px] uppercase tracking-[0.4em] transition-all group">
-                    <ArrowLeft className="w-4 h-4 group-hover:-translate-x-2 transition-transform" /> Back to Halls
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-6">
+              <div>
+                <button onClick={() => router.push('/')} className="flex items-center gap-1.5 text-slate-400 hover:text-slate-600 mb-4 font-medium text-xs tracking-wide transition-colors group">
+                    <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" /> Back to Halls
                 </button>
-                <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-slate-900 uppercase leading-tight">{hall.name}</h1>
+                <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">{hall.name}</h1>
               </div>
-
-              {/* Feature 1 Layout: Interactive Toggles / Legend System */}
-              <div className="flex flex-wrap gap-3 bg-white p-2 rounded-3xl border border-slate-200/80 shadow-sm w-full md:w-auto">
-                <button 
-                  onClick={() => setEventTypeFilter('all')} 
-                  className={`px-4 py-2 rounded-xl text-[9px] font-bold uppercase tracking-wider transition-all ${eventTypeFilter === 'all' ? 'bg-slate-950 text-white' : 'text-slate-500 hover:bg-slate-50'}`}
-                >
-                  All events
-                </button>
-                <button 
-                  onClick={() => setEventTypeFilter('academic')} 
-                  className={`px-4 py-2 rounded-xl text-[9px] font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${eventTypeFilter === 'academic' ? 'bg-emerald-600 text-white' : 'text-slate-500 hover:bg-emerald-50'}`}
-                >
-                  <div className={`w-1.5 h-1.5 rounded-full ${eventTypeFilter === 'academic' ? 'bg-white' : 'bg-emerald-500'}`} /> Academic
-                </button>
-                <button 
-                  onClick={() => setEventTypeFilter('cultural')} 
-                  className={`px-4 py-2 rounded-xl text-[9px] font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${eventTypeFilter === 'cultural' ? 'bg-purple-600 text-white' : 'text-slate-500 hover:bg-purple-50'}`}
-                >
-                  <div className={`w-1.5 h-1.5 rounded-full ${eventTypeFilter === 'cultural' ? 'bg-white' : 'bg-purple-500'}`} /> Cultural / Club
-                </button>
+              <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
+                <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-slate-100 shadow-sm shrink-0"><div className="w-2 h-2 rounded-full bg-emerald-500" /><span className="text-[11px] font-medium text-slate-600">Available</span></div>
+                <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-slate-100 shadow-sm shrink-0"><div className="w-2 h-2 rounded-full bg-rose-400" /><span className="text-[11px] font-medium text-slate-600">Reserved</span></div>
               </div>
             </div>
 
-            {/* Calendar Block Container */}
-            <div className="bg-white rounded-4xl md:rounded-[4rem] shadow-2xl shadow-slate-200/60 border border-slate-100 overflow-hidden mb-20">
-              <div className="p-8 md:p-14 flex flex-col md:flex-row justify-between items-center gap-10 border-b border-slate-50 bg-slate-50/20">
-                <h2 className="text-3xl md:text-4xl font-bold text-slate-900 uppercase tracking-tight">{format(currentDate, 'MMMM yyyy')}</h2>
-                <div className="flex items-center gap-4 bg-white p-2 rounded-[1.8rem] border border-slate-200 shadow-sm w-full md:w-auto justify-center">
-                  <button onClick={() => setCurrentDate(subMonths(currentDate, 1))} className="p-3 text-slate-400 hover:text-emerald-600 transition-colors bg-slate-50 rounded-2xl"><ChevronLeft className="w-5 h-5" /></button>
-                  <button onClick={() => setCurrentDate(new Date())} className="px-8 py-3 bg-slate-900 text-white rounded-[1.2rem] font-bold text-[10px] uppercase tracking-[0.3em]">Today</button>
-                  <button onClick={() => setCurrentDate(addMonths(currentDate, 1))} className="p-3 text-slate-400 hover:text-emerald-600 transition-colors bg-slate-50 rounded-2xl"><ChevronRight className="w-5 h-5" /></button>
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mb-12">
+              <div className="p-5 md:p-6 flex flex-col sm:flex-row justify-between items-center gap-4 border-b border-slate-100 bg-slate-50/50">
+                <h2 className="text-lg font-bold text-slate-900">{format(currentDate, 'MMMM yyyy')}</h2>
+                <div className="flex items-center gap-2 bg-white p-1 rounded-xl border border-slate-200/80 shadow-sm w-full sm:w-auto justify-between">
+                  <button onClick={() => setCurrentDate(subMonths(currentDate, 1))} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all rounded-lg"><ChevronLeft className="w-4 h-4" /></button>
+                  <button onClick={() => setCurrentDate(new Date())} className="px-4 py-1.5 bg-slate-950 text-white rounded-lg font-medium text-xs tracking-wide transition-all hover:bg-slate-900">Today</button>
+                  <button onClick={() => setCurrentDate(addMonths(currentDate, 1))} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all rounded-lg"><ChevronRight className="w-4 h-4" /></button>
                 </div>
               </div>
 
-              <div className="grid grid-cols-7 border-l border-t border-slate-50">
+              <div className="grid grid-cols-7 bg-slate-100/50 gap-[1px]">
                 {calendarDays.map((day: Date, idx: number) => {
-                  const dayBookings = filteredBookings.filter((b: Booking) => b.booking_date && isSameDay(new Date(b.booking_date), day));
+                  const dayBookings = bookings.filter((b: Booking) => b.booking_date && isSameDay(new Date(b.booking_date), day));
                   const isCurrentMonth = isSameMonth(day, monthStart);
                   const isToday = isSameDay(day, new Date());
                   const isPast = isBefore(day, todayDate) && !isToday;
@@ -323,28 +265,18 @@ export default function BookingPage() {
                     <div 
                       key={idx} 
                       onClick={() => { if (isCurrentMonth && !isPast) { setSelectedDate(day); setIsPopupOpen(true); } }}
-                      className={`min-h-24 md:min-h-40 p-2 md:p-5 border-b border-r border-slate-50 transition-all group relative cursor-pointer ${!isCurrentMonth || isPast ? 'opacity-20 bg-slate-50/10 cursor-not-allowed' : 'hover:bg-slate-50/50'}`}
+                      className={`min-h-[80px] md:min-h-[120px] p-3 bg-white transition-all relative flex flex-col justify-between ${!isCurrentMonth || isPast ? 'opacity-30 bg-slate-50/50 cursor-not-allowed' : 'hover:bg-slate-50/80 cursor-pointer active:scale-[0.99]'}`}
                     >
-                      <span className={`text-sm md:text-base font-bold w-8 h-8 md:w-9 md:h-9 flex items-center justify-center rounded-xl mb-3 transition-all ${isToday ? 'bg-emerald-500 text-white shadow-xl' : 'text-slate-800'}`}>{format(day, 'd')}</span>
-                      
-                      {/* Feature 1: Variable Color Code Badges dynamically chosen based on booking profiles */}
-                      <div className="space-y-1.5 hidden md:block">
-                        {dayBookings.slice(0, 2).map((b, bIdx) => {
-                          const isAcademic = !b.event_type || b.event_type === 'academic';
-                          return (
-                            <div 
-                              key={bIdx} 
-                              className={`px-2 py-1 rounded-lg text-[8px] font-bold uppercase truncate border ${isAcademic ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-purple-50 text-purple-700 border-purple-100'}`}
-                            >
-                              {b.event_name}
-                            </div>
-                          )
-                        })}
-                        {dayBookings.length > 2 && (
-                          <div className="text-[8px] font-bold text-slate-400 pl-1">+{dayBookings.length - 2} more</div>
-                        )}
-                      </div>
-                      {dayBookings.length > 0 && <div className="md:hidden w-1.5 h-1.5 rounded-full bg-slate-700 mx-auto" />}
+                      <span className={`text-xs font-bold w-6 h-6 flex items-center justify-center rounded-lg transition-all ${isToday ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20' : 'text-slate-800'}`}>{format(day, 'd')}</span>
+                      {dayBookings.length > 0 && isCurrentMonth && (
+                        <div className="mt-2 w-full">
+                          <div className="hidden md:inline-flex items-center gap-1.5 px-2 py-0.5 bg-rose-50 border border-rose-100 rounded-lg">
+                            <div className="w-1 h-1 rounded-full bg-rose-400" />
+                            <span className="text-[10px] font-semibold text-rose-600 whitespace-nowrap">{dayBookings.length} {dayBookings.length === 1 ? 'Event' : 'Events'}</span>
+                          </div>
+                          <div className="md:hidden w-1.5 h-1.5 rounded-full bg-rose-400 mx-auto" />
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -352,90 +284,71 @@ export default function BookingPage() {
             </div>
           </>
         ) : (
-          /* Booking Submission Intake Layout Screen */
-          <div className="max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-12 duration-700">
-             <button onClick={() => { setIsRegistering(false); setIsVerifying(false); setErrorMsg(null); }} className="flex items-center gap-3 text-slate-400 hover:text-emerald-600 mb-10 font-bold text-[10px] uppercase tracking-[0.4em] transition-all group">
-                <ArrowLeft className="w-4 h-4 group-hover:-translate-x-2 transition-transform" /> Return to Calendar
+          <div className="max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-400">
+             <button onClick={() => { setIsRegistering(false); setIsVerifying(false); setErrorMsg(null); }} className="flex items-center gap-1.5 text-slate-400 hover:text-slate-600 mb-6 font-medium text-xs tracking-wide transition-colors group">
+                <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" /> Return to Calendar
              </button>
-             <div className="bg-white rounded-4xl md:rounded-[4rem] shadow-3xl border border-slate-100 overflow-hidden">
-                <div className="bg-slate-900 p-8 md:p-16 text-white relative">
-                  <h2 className="text-3xl md:text-4xl font-bold tracking-tight uppercase mb-2 leading-none">{hall.name}</h2>
-                  <p className="text-emerald-400 text-[10px] font-bold uppercase tracking-[0.4em] opacity-80">Request for {selectedDate ? format(selectedDate, 'MMMM do, yyyy') : ''}</p>
+             <div className="bg-white rounded-2xl shadow-md border border-slate-100 overflow-hidden">
+                <div className="bg-slate-950 p-6 md:p-8 text-white relative">
+                  <div className="absolute top-0 right-0 w-40 h-40 bg-emerald-500/10 rounded-full blur-3xl" />
+                  <h2 className="text-xl font-bold tracking-tight mb-1">{hall.name}</h2>
+                  <p className="text-emerald-400 text-xs font-medium">Request for {selectedDate ? format(selectedDate, 'MMMM do, yyyy') : ''}</p>
                 </div>
-                <div className="p-8 md:p-20">
+                <div className="p-6 md:p-10">
                    {!isVerifying ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-12">
-                      <div className="relative border-b-2 border-slate-200 pb-2 focus-within:border-emerald-500 transition-colors">
-                        <input type="text" placeholder="Full Name" value={formData.fullName} onChange={e => setFormData({...formData, fullName: e.target.value})} className="w-full py-2 font-bold text-xl outline-none uppercase bg-transparent text-slate-900 placeholder-slate-300" />
-                        <label className="absolute left-0 -top-6 text-emerald-600 font-bold text-[9px] uppercase tracking-widest">Host Full Name</label>
-                      </div>
-                      <div className="relative border-b-2 border-slate-200 pb-2 focus-within:border-emerald-500 transition-colors">
-                        <input type="email" placeholder="Email Address" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value.toLowerCase()})} className="w-full py-2 font-bold text-xl outline-none bg-transparent text-slate-900 placeholder-slate-300" />
-                        <label className="absolute left-0 -top-6 text-emerald-600 font-bold text-[9px] uppercase tracking-widest">Academic Email</label>
-                      </div>
-                      <div className="relative border-b-2 border-slate-200 pb-2 focus-within:border-emerald-500 transition-colors">
-                        <input type="text" placeholder="Department" value={formData.dept} onChange={e => setFormData({...formData, dept: e.target.value})} className="w-full py-2 font-bold text-xl outline-none uppercase bg-transparent text-slate-900 placeholder-slate-300" />
-                        <label className="absolute left-0 -top-6 text-emerald-600 font-bold text-[9px] uppercase tracking-widest">Department</label>
-                      </div>
-                      <div className="relative border-b-2 border-slate-200 pb-2 focus-within:border-emerald-500 transition-colors">
-                        <input type="text" placeholder="Event Name" value={formData.eventName} onChange={e => setFormData({...formData, eventName: e.target.value})} className="w-full py-2 font-bold text-xl outline-none uppercase bg-transparent text-slate-900 placeholder-slate-300" />
-                        <label className="absolute left-0 -top-6 text-emerald-600 font-bold text-[9px] uppercase tracking-widest">Event Title</label>
-                      </div>
-
-                      {/* Feature 1 Form Selector: Choose Category track */}
-                      <div className="col-span-full space-y-3">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Event Category classification</label>
-                        <div className="grid grid-cols-2 gap-4">
-                          <button 
-                            type="button" 
-                            onClick={() => setFormData({...formData, eventType: 'academic'})}
-                            className={`p-4 rounded-2xl font-bold text-xs uppercase tracking-wider text-center border-2 transition-all ${formData.eventType === 'academic' ? 'border-emerald-500 bg-emerald-50/50 text-emerald-900' : 'border-slate-100 bg-slate-50 text-slate-500'}`}
-                          >
-                            Academic Event
-                          </button>
-                          <button 
-                            type="button" 
-                            onClick={() => setFormData({...formData, eventType: 'cultural'})}
-                            className={`p-4 rounded-2xl font-bold text-xs uppercase tracking-wider text-center border-2 transition-all ${formData.eventType === 'cultural' ? 'border-purple-500 bg-purple-50/50 text-purple-900' : 'border-slate-100 bg-slate-50 text-slate-500'}`}
-                          >
-                            Cultural / Club Event
-                          </button>
+                    <div className="space-y-6">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-xs font-semibold text-slate-500">Host Full Name</label>
+                          <input type="text" placeholder="John Doe" value={formData.fullName} onChange={e => setFormData({...formData, fullName: e.target.value})} className="w-full px-3 py-2 text-sm font-medium border border-slate-200 rounded-xl outline-none bg-transparent text-slate-900 focus:border-slate-400 focus:ring-4 focus:ring-slate-100 transition-all placeholder:text-slate-300" />
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-xs font-semibold text-slate-500">Academic Email</label>
+                          <input type="email" placeholder="name@stanns.edu" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value.toLowerCase()})} className="w-full px-3 py-2 text-sm font-medium border border-slate-200 rounded-xl outline-none bg-transparent text-slate-900 focus:border-slate-400 focus:ring-4 focus:ring-slate-100 transition-all placeholder:text-slate-300" />
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-xs font-semibold text-slate-500">Department</label>
+                          <input type="text" placeholder="Computer Science" value={formData.dept} onChange={e => setFormData({...formData, dept: e.target.value})} className="w-full px-3 py-2 text-sm font-medium border border-slate-200 rounded-xl outline-none bg-transparent text-slate-900 focus:border-slate-400 focus:ring-4 focus:ring-slate-100 transition-all placeholder:text-slate-300" />
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-xs font-semibold text-slate-500">Event Title</label>
+                          <input type="text" placeholder="Guest Lecture on AI" value={formData.eventName} onChange={e => setFormData({...formData, eventName: e.target.value})} className="w-full px-3 py-2 text-sm font-medium border border-slate-200 rounded-xl outline-none bg-transparent text-slate-900 focus:border-slate-400 focus:ring-4 focus:ring-slate-100 transition-all placeholder:text-slate-300" />
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-xs font-semibold text-slate-500">Start Time</label>
+                          <input type="time" min="07:30" max="16:30" value={formData.startTime} onChange={e => setFormData({...formData, startTime: e.target.value})} className="w-full border border-slate-200 p-2.5 rounded-xl text-sm font-medium outline-none text-slate-900 focus:border-slate-400 focus:ring-4 focus:ring-slate-100 transition-all" />
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-xs font-semibold text-slate-500">End Time</label>
+                          <input type="time" min="07:30" max="16:30" value={formData.endTime} onChange={e => setFormData({...formData, endTime: e.target.value})} className="w-full border border-slate-200 p-2.5 rounded-xl text-sm font-medium outline-none text-slate-900 focus:border-slate-400 focus:ring-4 focus:ring-slate-100 transition-all" />
                         </div>
                       </div>
                       
-                      <div className="space-y-3">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Start Time</label>
-                        <input 
-                          type="time" min="07:30" max="16:30" value={formData.startTime} 
-                          onChange={e => setFormData({...formData, startTime: e.target.value})} 
-                          className="w-full bg-slate-100 p-4 rounded-2xl font-bold text-lg outline-none border border-slate-200 text-slate-900" 
-                        />
-                      </div>
-                      <div className="space-y-3">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">End Time</label>
-                        <input 
-                          type="time" min="07:30" max="16:30" value={formData.endTime} 
-                          onChange={e => setFormData({...formData, endTime: e.target.value})} 
-                          className="w-full bg-slate-100 p-4 rounded-2xl font-bold text-lg outline-none border border-slate-200 text-slate-900" 
-                        />
-                      </div>
-                      
-                      <div className="col-span-full mt-10 space-y-6">
+                      <div className="pt-4 space-y-4">
                         {errorMsg && (
-                          <div className="p-5 bg-rose-50 border border-rose-200 rounded-4xl flex items-center gap-4 animate-in fade-in">
-                            <div className="w-10 h-10 bg-rose-500 rounded-2xl flex items-center justify-center shrink-0 shadow-lg"><AlertCircle className="text-white w-5 h-5" /></div>
-                            <p className="text-[11px] font-bold text-rose-600 uppercase tracking-widest">{errorMsg}</p>
+                          <div className="p-3.5 bg-rose-50 border border-rose-100 rounded-xl flex items-center gap-3 animate-in fade-in duration-200">
+                            <AlertCircle className="text-rose-500 w-4 h-4 shrink-0" />
+                            <p className="text-xs font-medium text-rose-600">{errorMsg}</p>
                           </div>
                         )}
-                        <button onClick={handleSendOTP} disabled={loading} className="w-full py-6 bg-slate-900 text-white rounded-3xl font-bold text-[12px] uppercase tracking-[0.4em] shadow-2xl transition-all">
+                        <button onClick={handleSendOTP} disabled={loading} className="w-full py-3 bg-slate-950 text-white rounded-xl font-medium text-xs tracking-wide shadow-md active:scale-[0.99] hover:bg-slate-900 transition-all disabled:opacity-50">
                           {loading ? 'Validating Schedule...' : 'Confirm Booking'}
                         </button>
                       </div>
                     </div>
                    ) : (
-                    <div className="max-w-md mx-auto text-center space-y-12 py-8">
-                        <div><p className="text-[10px] font-bold uppercase text-slate-400 tracking-[0.4em] mb-4">Enter Code</p><input type="text" maxLength={6} placeholder="000000" autoFocus value={otpCode} onChange={e => setOtpCode(e.target.value)} className="w-full text-center text-4xl font-bold tracking-[0.5em] border-b-2 border-emerald-500 outline-none text-slate-900 pb-6 bg-transparent" /></div>
-                        <button onClick={handleVerifyAndBook} disabled={loading} className="w-full py-6 bg-emerald-600 text-white rounded-3xl font-bold uppercase text-[10px] tracking-[0.4em] transition-all">Verify & Complete</button>
+                    <div className="max-w-xs mx-auto text-center space-y-6 py-4">
+                        <div className="space-y-2">
+                           <p className="text-xs font-semibold text-slate-400 tracking-wide">Enter Verification Code</p>
+                           <input type="text" maxLength={6} placeholder="000000" autoFocus value={otpCode} onChange={e => setOtpCode(e.target.value)} className="w-full text-center text-3xl font-bold border-b border-slate-200 outline-none text-slate-900 pb-2 bg-transparent tracking-widest focus:border-slate-400 transition-colors" />
+                        </div>
+                        {errorMsg && (
+                          <div className="p-2.5 bg-rose-50 border border-rose-100 rounded-lg flex items-center justify-center gap-2">
+                            <AlertCircle className="text-rose-500 w-3.5 h-3.5 shrink-0" />
+                            <p className="text-[11px] font-medium text-rose-600">{errorMsg}</p>
+                          </div>
+                        )}
+                        <button onClick={handleVerifyAndBook} disabled={loading} className="w-full py-3 bg-emerald-600 text-white rounded-xl font-medium text-xs tracking-wide shadow-md active:scale-[0.99] transition-all hover:bg-emerald-500 disabled:opacity-50">Verify & Complete</button>
                     </div>
                    )}
                 </div>
@@ -444,86 +357,33 @@ export default function BookingPage() {
         )}
       </div>
 
-      {/* Feature 3: Split hourly timeline view inside individual daily info modal */}
       {isPopupOpen && selectedDate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/80" onClick={() => setIsPopupOpen(false)} />
-          <div className="relative w-full max-w-md bg-white rounded-[2.5rem] md:rounded-[3.5rem] shadow-3xl overflow-hidden animate-in zoom-in duration-300">
-            <div className="p-8 border-b border-slate-50 flex justify-between items-center bg-slate-900 text-white relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm" onClick={() => setIsPopupOpen(false)} />
+          <div className="relative w-full max-w-sm bg-white rounded-2xl shadow-xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-950 text-white relative">
               <div>
-                <p className="text-[9px] font-bold uppercase tracking-[0.4em] text-emerald-400 mb-1">Daily Agenda & Availability</p>
-                <h3 className="text-2xl font-bold tracking-tighter uppercase leading-none">{format(selectedDate, 'MMM do, yyyy')}</h3>
+                <p className="text-[10px] font-semibold tracking-wide text-emerald-400 mb-0.5">Daily Agenda</p>
+                <h3 className="text-base font-bold">{format(selectedDate, 'MMM do, yyyy')}</h3>
               </div>
-              <button onClick={() => setIsPopupOpen(false)} className="w-10 h-10 flex items-center justify-center bg-white/10 rounded-2xl hover:bg-white/20 transition-colors"><X className="w-5 h-5" /></button>
+              <button onClick={() => setIsPopupOpen(false)} className="w-8 h-8 flex items-center justify-center bg-white/10 rounded-lg hover:bg-white/20 transition-colors"><X className="w-4 h-4" /></button>
             </div>
-            
-            <div className="p-8 space-y-6">
-              {/* Feature 3 Sub-component: Visual Session Timeline Breakdown */}
-              <div>
-                <h4 className="text-[9px] font-bold uppercase tracking-widest text-slate-400 mb-3 flex items-center gap-2"><Clock className="w-3.5 h-3.5" /> Session Availability</h4>
-                <div className="grid grid-cols-1 gap-3">
-                  {timeSlots.map((slot, sIdx) => {
-                    const activeConflicts = bookings.filter((b: Booking) => {
-                      return b.booking_date && 
-                             isSameDay(new Date(b.booking_date), selectedDate) &&
-                             b.start_time < `${slot.end}:00` && 
-                             b.end_time > `${slot.start}:00`;
-                    });
-                    const isOccupied = activeConflicts.length > 0;
-
-                    return (
-                      <div 
-                        key={sIdx} 
-                        className={`p-4 rounded-2xl border flex items-center justify-between transition-all ${isOccupied ? 'bg-rose-50/50 border-rose-100 text-rose-900' : 'bg-emerald-50/40 border-emerald-100 text-emerald-900'}`}
-                      >
-                        <div>
-                          <p className="text-[11px] font-bold uppercase tracking-wider">{slot.label}</p>
-                          <p className="text-[10px] opacity-70 font-semibold">{formatTo12Hr(slot.start)} - {formatTo12Hr(slot.end)}</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className={`w-2 h-2 rounded-full ${isOccupied ? 'bg-rose-500 animate-pulse' : 'bg-emerald-500'}`} />
-                          <span className="text-[9px] font-bold uppercase tracking-widest">
-                            {isOccupied ? `Reserved (${activeConflicts[0].event_name})` : 'Available'}
-                          </span>
-                        </div>
+            <div className="p-5">
+              <div className="space-y-2.5 mb-6 max-h-[30vh] overflow-y-auto pr-1">
+                {bookings.filter((b: Booking) => b.booking_date && isSameDay(new Date(b.booking_date), selectedDate)).map((b: Booking, i: number) => (
+                    <div key={i} className="flex items-center justify-between p-3 bg-slate-50/80 rounded-xl border border-slate-100">
+                      <div className="min-w-0 pr-2">
+                         <p className="text-xs font-bold text-slate-900 truncate">{b.event_name}</p>
+                         <p className="text-[10px] font-medium text-slate-400 truncate mt-0.5">{b.department}</p>
                       </div>
-                    );
-                  })}
-                </div>
+                      <div className="text-[10px] font-semibold text-emerald-600 bg-white px-2 py-1 rounded-lg border border-slate-100 whitespace-nowrap shrink-0 shadow-sm">{formatTo12Hr(b.start_time)} - {formatTo12Hr(b.end_time)}</div>
+                    </div>
+                ))}
+                {bookings.filter((b: Booking) => b.booking_date && isSameDay(new Date(b.booking_date), selectedDate)).length === 0 && (
+                    <div className="text-center py-8 border border-dashed border-slate-200 rounded-xl"><p className="text-xs font-medium text-slate-400">No Reservations Scheduled</p></div>
+                )}
               </div>
-
-              <hr className="border-slate-100" />
-
-              {/* Comprehensive Day Log Stack */}
-              <div className="space-y-3">
-                <h4 className="text-[9px] font-bold uppercase tracking-widest text-slate-400 block">Scheduled Events Log</h4>
-                <div className="space-y-2.5 max-h-[25vh] overflow-y-auto pr-1 custom-scrollbar">
-                  {bookings.filter((b: Booking) => b.booking_date && isSameDay(new Date(b.booking_date), selectedDate)).map((b: Booking, i: number) => {
-                    const isAcademic = !b.event_type || b.event_type === 'academic';
-                    return (
-                      <div key={i} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                        <div className="max-w-[60%]">
-                          <p className="text-xs font-bold text-slate-900 uppercase truncate">{b.event_name}</p>
-                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">{b.department}</p>
-                        </div>
-                        <span className={`px-2.5 py-1.5 rounded-xl text-[8px] font-bold whitespace-nowrap border ${isAcademic ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-purple-50 text-purple-700 border-purple-100'}`}>
-                          {formatTo12Hr(b.start_time)} - {formatTo12Hr(b.end_time)}
-                        </span>
-                      </div>
-                    );
-                  })}
-                  {bookings.filter((b: Booking) => b.booking_date && isSameDay(new Date(b.booking_date), selectedDate)).length === 0 && (
-                      <div className="text-center py-8 border border-dashed border-slate-200 rounded-2xl"><p className="text-[9px] font-bold text-slate-300 uppercase tracking-[0.3em]">No Bookings Set For Today</p></div>
-                  )}
-                </div>
-              </div>
-
-              <button 
-                onClick={() => { setIsPopupOpen(false); setIsRegistering(true); }} 
-                className="w-full py-5 bg-slate-900 text-white rounded-3xl font-bold text-[10px] uppercase tracking-[0.4em] shadow-xl flex items-center justify-center gap-2 hover:bg-emerald-600 transition-all"
-              >
-                <Plus className="w-4 h-4" /> Initialize Request
-              </button>
+              <button onClick={() => { setIsPopupOpen(false); setIsRegistering(true); }} className="w-full py-3 bg-emerald-600 text-white rounded-xl font-medium text-xs tracking-wide shadow-sm flex items-center justify-center gap-2 hover:bg-emerald-500 transition-colors"><Plus className="w-4 h-4" /> Request Booking</button>
             </div>
           </div>
         </div>
