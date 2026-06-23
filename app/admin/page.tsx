@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { 
   CheckCircle, XCircle, Clock, Calendar, 
-  Trash2, ShieldCheck, Inbox, Search, Filter
+  Trash2, ShieldCheck, Inbox, Search, Filter, Lock
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -23,14 +23,23 @@ interface Booking {
 }
 
 export default function AdminDashboard() {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [passwordInput, setPasswordInput] = useState<string>('');
+  const [authError, setAuthError] = useState<string | null>(null);
+
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('All');
 
+  // Hardcoded gatekeeping credential matching your initial configuration
+  const ADMIN_PASSWORD = "admin"; 
+
   useEffect(() => {
-    fetchAdminBookings();
-  }, []);
+    if (isAuthenticated) {
+      fetchAdminBookings();
+    }
+  }, [isAuthenticated]);
 
   async function fetchAdminBookings() {
     setLoading(true);
@@ -44,6 +53,16 @@ export default function AdminDashboard() {
     }
     setLoading(false);
   }
+
+  const handleLoginSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passwordInput === ADMIN_PASSWORD) {
+      setIsAuthenticated(true);
+      setAuthError(null);
+    } else {
+      setAuthError("Invalid administrative passcode credential.");
+    }
+  };
 
   async function updateStatus(id: string | number, nextStatus: 'Confirmed' | 'Rejected') {
     const { error } = await supabase
@@ -83,6 +102,50 @@ export default function AdminDashboard() {
     const matchesStatus = statusFilter === 'All' || b.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
+
+  // Render Gatekeeper Portal if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 font-sans antialiased">
+        <div className="max-w-md w-full bg-white border border-slate-200 rounded-3xl shadow-xl p-8 space-y-6">
+          <div className="text-center space-y-2">
+            <div className="w-12 h-12 bg-emerald-50 border border-emerald-100 rounded-2xl flex items-center justify-center mx-auto text-emerald-600 shadow-sm">
+              <Lock className="w-5 h-5" />
+            </div>
+            <h2 className="text-xl font-bold text-slate-900 tracking-tight">Admin Authentication</h2>
+            <p className="text-xs text-slate-400 font-medium">Elevated authorization access gateway required</p>
+          </div>
+
+          <form onSubmit={handleLoginSubmit} className="space-y-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-500 tracking-wide">Security Password</label>
+              <input 
+                type="password" 
+                placeholder="••••••••" 
+                autoFocus
+                value={passwordInput}
+                onChange={e => setPasswordInput(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 focus:border-emerald-500 focus:bg-white outline-none transition-all"
+              />
+            </div>
+
+            {authError && (
+              <div className="p-3 bg-rose-50 border border-rose-100 rounded-xl text-xs font-medium text-rose-600">
+                {authError}
+              </div>
+            )}
+
+            <button 
+              type="submit"
+              className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-semibold text-sm tracking-wide transition-all shadow-md active:scale-[0.99]"
+            >
+              Verify & Unlock Control Panel
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
