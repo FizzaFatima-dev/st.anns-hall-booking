@@ -118,11 +118,13 @@ export default function BookingPage() {
     const normStart = formData.startTime.length === 5 ? `${formData.startTime}:00` : formData.startTime;
     const normEnd = formData.endTime.length === 5 ? `${formData.endTime}:00` : formData.endTime;
 
+    // Only conflict with bookings that are Confirmed
     let query = supabase
       .from('bookings')
       .select('event_name, start_time, end_time')
       .eq('hall_id', id)
       .eq('booking_date', formattedDate)
+      .eq('status', 'Confirmed')
       .lt('start_time', normEnd)
       .gt('end_time', normStart);
 
@@ -211,7 +213,7 @@ export default function BookingPage() {
         .update({
           event_name: formData.eventName, booking_date: format(selectedDate, 'yyyy-MM-dd'),
           start_time: insertStart, end_time: insertEnd, user_name: formData.fullName,
-          department: formData.dept
+          department: formData.dept, status: 'Pending' // Updates go back to pending for re-approval
         })
         .eq('id', editingBooking.id);
 
@@ -223,10 +225,11 @@ export default function BookingPage() {
         setErrorMsg("Failed to update layout reservation slots.");
       }
     } else {
+      // FIX: Set status explicitly to 'Pending' so admins can review it before it blocks calendar grids
       const { error: bookingError } = await supabase.from('bookings').insert([{
         hall_id: id, event_name: formData.eventName, booking_date: format(selectedDate, 'yyyy-MM-dd'),
         start_time: insertStart, end_time: insertEnd, user_name: formData.fullName,
-        user_email: activeEmail, department: formData.dept, status: 'Confirmed'
+        user_email: activeEmail, department: formData.dept, status: 'Pending'
       }]);
 
       setLoading(false);
@@ -271,8 +274,8 @@ export default function BookingPage() {
         <div className="max-w-md w-full bg-white border border-slate-200 rounded-[2.5rem] shadow-xl overflow-hidden animate-in zoom-in duration-500">
           <div className="bg-gradient-to-br from-emerald-600 to-teal-700 p-10 text-white text-center">
             <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center mx-auto mb-4"><CheckCircle2 className="w-8 h-8 text-white" /></div>
-            <h2 className="text-2xl font-bold tracking-tight">Reservation Confirmed</h2>
-            <p className="text-xs opacity-90 mt-1 tracking-wide">Your dashboard portal calendar has updated</p>
+            <h2 className="text-2xl font-bold tracking-tight">Request Submitted</h2>
+            <p className="text-xs opacity-90 mt-1 tracking-wide">Awaiting administrative validation and approval</p>
           </div>
           <div className="p-8 space-y-6">
             <div className="space-y-4">
@@ -359,7 +362,12 @@ export default function BookingPage() {
 
               <div className="grid grid-cols-7 bg-white">
                 {calendarDays.map((day: Date, idx: number) => {
-                  const dayBookings = bookings.filter((b: Booking) => b.booking_date && isSameDay(new Date(b.booking_date), day));
+                  // FIX: Only aggregate and mark days that have a 'Confirmed' reservation status flag
+                  const dayBookings = bookings.filter((b: Booking) => 
+                    b.booking_date && 
+                    isSameDay(new Date(b.booking_date), day) &&
+                    b.status === 'Confirmed'
+                  );
                   const isCurrentMonth = isSameMonth(day, monthStart);
                   const isToday = isSameDay(day, new Date());
                   const isPast = isBefore(day, todayDate) && !isToday;
@@ -467,7 +475,12 @@ export default function BookingPage() {
             </div>
             <div className="p-6">
               <div className="space-y-3 mb-6 max-h-[35vh] overflow-y-auto pr-1 no-scrollbar">
-                {bookings.filter((b: Booking) => b.booking_date && isSameDay(new Date(b.booking_date), selectedDate)).map((b: Booking, i: number) => (
+                {/* FIX: Filter out Pending or Rejected bookings inside the daily agenda details too */}
+                {bookings.filter((b: Booking) => 
+                  b.booking_date && 
+                  isSameDay(new Date(b.booking_date), selectedDate) &&
+                  b.status === 'Confirmed'
+                ).map((b: Booking, i: number) => (
                     <div key={i} className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
                       <div>
                         <p className="text-sm font-semibold text-slate-900">{b.event_name}</p>
@@ -481,7 +494,11 @@ export default function BookingPage() {
                       <div className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md self-start sm:self-center whitespace-nowrap">{formatTo12Hr(b.start_time)} - {formatTo12Hr(b.end_time)}</div>
                     </div>
                 ))}
-                {bookings.filter((b: Booking) => b.booking_date && isSameDay(new Date(b.booking_date), selectedDate)).length === 0 && (
+                {bookings.filter((b: Booking) => 
+                  b.booking_date && 
+                  isSameDay(new Date(b.booking_date), selectedDate) &&
+                  b.status === 'Confirmed'
+                ).length === 0 && (
                     <div className="text-center py-10 border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
                       <Inbox className="w-6 h-6 text-slate-400 mx-auto mb-2" />
                       <p className="text-xs text-slate-400 font-medium tracking-wide">No active reservations layout</p>
