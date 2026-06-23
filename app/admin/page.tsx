@@ -16,7 +16,7 @@ export default function AdminPortal() {
 
   const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
 
-  // Formats specific default names to matches the customized portal branding
+  // Formats specific default names to match the customized portal branding
   const formatHallName = (name: string): string => {
     if (!name) return '';
     if (name === "Seminar Hall 1") return "Gnanamma Hall";
@@ -43,7 +43,8 @@ export default function AdminPortal() {
     const { data } = await supabase
       .from('bookings')
       .select('*, halls(name)')
-      .order('booking_date', { ascending: true }) 
+      // Changed ascending to false so newest dates load at the top of the timeline
+      .order('booking_date', { ascending: false }) 
       .order('start_time', { ascending: true });
     
     if (data) setBookings(data);
