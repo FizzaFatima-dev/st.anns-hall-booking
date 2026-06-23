@@ -159,14 +159,15 @@ export default function BookingPage() {
     }
   };
 
-  const startInitiateDelete = async (booking: Booking) => {
+  const startInitiateDelete = async (e: React.MouseEvent, booking: Booking) => {
+    e.stopPropagation(); // Prevents close tracking layout bug
     setErrorMsg(null);
     setLoading(true);
     const { error } = await supabase.auth.signInWithOtp({
       email: booking.user_email?.toLowerCase(),
       options: { shouldCreateUser: true }
     });
-    setLoading(true);
+    setLoading(false);
     if (error) {
       alert(error.message);
     } else {
@@ -247,7 +248,8 @@ export default function BookingPage() {
     document.head.appendChild(script);
   };
 
-  const startReschedule = (booking: Booking) => {
+  const startReschedule = (e: React.MouseEvent, booking: Booking) => {
+    e.stopPropagation(); // Prevents close tracking layout bug
     setEditingBooking(booking);
     setSelectedDate(new Date(booking.booking_date));
     setFormData({
@@ -473,8 +475,8 @@ export default function BookingPage() {
                         
                         {/* Interactive Self-Service Actions */}
                         <div className="flex gap-4 mt-3 pt-2 border-t border-slate-200/60">
-                           <button onClick={() => startReschedule(b)} className="flex items-center gap-1.5 text-[9px] font-bold text-emerald-600 hover:text-emerald-700 uppercase tracking-wider"><Edit2 size={10}/> Reschedule</button>
-                           <button onClick={() => startInitiateDelete(b)} className="flex items-center gap-1.5 text-[9px] font-bold text-rose-500 hover:text-rose-600 uppercase tracking-wider"><Trash2 size={10}/> Cancel Slot</button>
+                           <button onClick={(e) => startReschedule(e, b)} className="flex items-center gap-1.5 text-[9px] font-bold text-emerald-600 hover:text-emerald-700 uppercase tracking-wider"><Edit2 size={10}/> Reschedule</button>
+                           <button onClick={(e) => startInitiateDelete(e, b)} className="flex items-center gap-1.5 text-[9px] font-bold text-rose-500 hover:text-rose-600 uppercase tracking-wider"><Trash2 size={10}/> Cancel Slot</button>
                         </div>
                       </div>
                       <div className="text-[9px] font-bold text-emerald-600 bg-white px-3 py-2 rounded-xl border border-slate-100 self-start">{formatTo12Hr(b.start_time)} - {formatTo12Hr(b.end_time)}</div>
