@@ -9,7 +9,7 @@ import {
 } from 'date-fns';
 import { 
   ChevronLeft, ChevronRight, CheckCircle2, 
-  ArrowLeft, X, Plus, MapPin, Clock, Calendar, Edit2, Trash2, Inbox
+  ArrowLeft, X, Plus, MapPin, Clock, Calendar, Edit2, Trash2, Inbox, AlertCircle
 } from 'lucide-react';
 
 interface Hall {
@@ -50,7 +50,7 @@ export default function BookingPage() {
   const [targetDeleteId, setTargetDeleteId] = useState<string | number | null>(null);
 
   const [formData, setFormData] = useState({
-    fullName: '', email: '', dept: '', eventName: '', startTime: '', endTime: ''
+    fullName: '', email: '', dept: '', eventName: '', startTime: '07:30', endTime: '16:30'
   });
 
   const formatTo12Hr = (timeStr: string): string => {
@@ -89,6 +89,17 @@ export default function BookingPage() {
     fetchData();
   }, [id]);
 
+  // Sends automated admin notification using Supabase Edge Functions / internal triggers
+  const sendAdminAlert = async (type: 'NEW_REQUEST' | 'MODIFICATION' | 'CANCELLATION', detail: any) => {
+    try {
+      await supabase.functions.invoke('notify-admin', {
+        body: { type, detail, hallName: hall?.name || 'Unknown Venue' }
+      });
+    } catch (e) {
+      console.warn("Notification microservice handled asynchronously:", e);
+    }
+  };
+
   const handleSendOTP = async (purpose: 'create' | 'edit' = 'create', existingBooking?: Booking) => {
     setErrorMsg(null);
     const targetEmail = purpose === 'edit' ? existingBooking?.user_email : formData.email;
@@ -118,7 +129,6 @@ export default function BookingPage() {
     const normStart = formData.startTime.length === 5 ? `${formData.startTime}:00` : formData.startTime;
     const normEnd = formData.endTime.length === 5 ? `${formData.endTime}:00` : formData.endTime;
 
-    // Only conflict with bookings that are Confirmed
     let query = supabase
       .from('bookings')
       .select('event_name, start_time, end_time')
@@ -189,10 +199,12 @@ export default function BookingPage() {
     if (otpError) { setLoading(false); setErrorMsg("Security verification code is invalid."); return; }
 
     if (verificationPurpose === 'delete' && targetDeleteId) {
+      const deletedRecord = bookings.find(b => b.id === targetDeleteId);
       const { error: deleteError } = await supabase.from('bookings').delete().eq('id', targetDeleteId);
       setLoading(false);
       if (!deleteError) {
-        alert("Booking cancelled successfully.");
+        await sendAdminAlert('CANCELLATION', deletedRecord);
+        alert("Booking cancellation request successfully verified.");
         setIsRegistering(false);
         setIsVerifying(false);
         setTargetDeleteId(null);
@@ -208,32 +220,35 @@ export default function BookingPage() {
     const insertEnd = formData.endTime.length === 5 ? `${formData.endTime}:00` : formData.endTime;
 
     if (verificationPurpose === 'edit' && editingBooking) {
+      const updateData = {
+        event_name: formData.eventName, booking_date: format(selectedDate, 'yyyy-MM-dd'),
+        start_time: insertStart, end_time: insertEnd, user_name: formData.fullName,
+        department: formData.dept, status: 'Pending'
+      };
       const { error: updateError } = await supabase
         .from('bookings')
-        .update({
-          event_name: formData.eventName, booking_date: format(selectedDate, 'yyyy-MM-dd'),
-          start_time: insertStart, end_time: insertEnd, user_name: formData.fullName,
-          department: formData.dept, status: 'Pending' // Updates go back to pending for re-approval
-        })
+        .update(updateData)
         .eq('id', editingBooking.id);
 
       setLoading(false);
       if (!updateError) {
+        await sendAdminAlert('MODIFICATION', { id: editingBooking.id, ...updateData, user_email: activeEmail });
         setIsSuccess(true);
         triggerConfetti();
       } else {
         setErrorMsg("Failed to update layout reservation slots.");
       }
     } else {
-      // FIX: Set status explicitly to 'Pending' so admins can review it before it blocks calendar grids
-      const { error: bookingError } = await supabase.from('bookings').insert([{
+      const insertData = {
         hall_id: id, event_name: formData.eventName, booking_date: format(selectedDate, 'yyyy-MM-dd'),
         start_time: insertStart, end_time: insertEnd, user_name: formData.fullName,
         user_email: activeEmail, department: formData.dept, status: 'Pending'
-      }]);
+      };
+      const { error: bookingError } = await supabase.from('bookings').insert([insertData]);
 
       setLoading(false);
       if (!bookingError) {
+          await sendAdminAlert('NEW_REQUEST', insertData);
           setIsSuccess(true);
           triggerConfetti();
       } else {
@@ -362,7 +377,6 @@ export default function BookingPage() {
 
               <div className="grid grid-cols-7 bg-white">
                 {calendarDays.map((day: Date, idx: number) => {
-                  // FIX: Only aggregate and mark days that have a 'Confirmed' reservation status flag
                   const dayBookings = bookings.filter((b: Booking) => 
                     b.booking_date && 
                     isSameDay(new Date(b.booking_date), day) &&
@@ -425,13 +439,14 @@ export default function BookingPage() {
                         </div>
                       </div>
 
+                      {/* Operational restrictions directly tied into UI fields */}
                       <div className="grid grid-cols-2 gap-6 pt-2">
                         <div className="space-y-1.5">
-                          <label className="text-xs font-semibold text-slate-500 tracking-wide">Start Time</label>
+                          <label className="text-xs font-semibold text-slate-500 tracking-wide">Start Time (07:30 AM - 04:30 PM)</label>
                           <input type="time" min="07:30" max="16:30" value={formData.startTime} onChange={e => setFormData({...formData, startTime: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 focus:border-emerald-500 focus:bg-white outline-none transition-all" />
                         </div>
                         <div className="space-y-1.5">
-                          <label className="text-xs font-semibold text-slate-500 tracking-wide">End Time</label>
+                          <label className="text-xs font-semibold text-slate-500 tracking-wide">End Time (07:30 AM - 04:30 PM)</label>
                           <input type="time" min="07:30" max="16:30" value={formData.endTime} onChange={e => setFormData({...formData, endTime: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 focus:border-emerald-500 focus:bg-white outline-none transition-all" />
                         </div>
                       </div>
@@ -475,15 +490,22 @@ export default function BookingPage() {
             </div>
             <div className="p-6">
               <div className="space-y-3 mb-6 max-h-[35vh] overflow-y-auto pr-1 no-scrollbar">
-                {/* FIX: Filter out Pending or Rejected bookings inside the daily agenda details too */}
+                {/* Shows both Confirmed & explicitly marks Pending bookings for clarity */}
                 {bookings.filter((b: Booking) => 
                   b.booking_date && 
                   isSameDay(new Date(b.booking_date), selectedDate) &&
-                  b.status === 'Confirmed'
+                  (b.status === 'Confirmed' || b.status === 'Pending')
                 ).map((b: Booking, i: number) => (
-                    <div key={i} className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+                    <div key={i} className={`p-4 border rounded-xl flex flex-col justify-between gap-3 sm:flex-row sm:items-center ${b.status === 'Pending' ? 'bg-amber-50/40 border-amber-200/70' : 'bg-slate-50 border-slate-200'}`}>
                       <div>
-                        <p className="text-sm font-semibold text-slate-900">{b.event_name}</p>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <p className="text-sm font-semibold text-slate-900">{b.event_name}</p>
+                          {b.status === 'Pending' && (
+                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-amber-100 text-amber-800 text-[9px] font-bold rounded-md">
+                              <AlertCircle size={10}/> Pending Review
+                            </span>
+                          )}
+                        </div>
                         <p className="text-xs text-slate-500 mt-0.5">{b.department}</p>
                         
                         <div className="flex gap-4 mt-2.5 pt-2 border-t border-slate-200/60">
@@ -491,13 +513,13 @@ export default function BookingPage() {
                            <button onClick={(e) => startInitiateDelete(e, b)} className="flex items-center gap-1 text-[11px] font-medium text-rose-600 hover:text-rose-500 transition-colors"><Trash2 size={11}/> Drop</button>
                         </div>
                       </div>
-                      <div className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md self-start sm:self-center whitespace-nowrap">{formatTo12Hr(b.start_time)} - {formatTo12Hr(b.end_time)}</div>
+                      <div className={`text-[10px] font-bold px-2.5 py-1 rounded-md self-start sm:self-center whitespace-nowrap ${b.status === 'Pending' ? 'text-amber-700 bg-amber-50 border border-amber-200' : 'text-emerald-700 bg-emerald-50 border border-emerald-200'}`}>{formatTo12Hr(b.start_time)} - {formatTo12Hr(b.end_time)}</div>
                     </div>
                 ))}
                 {bookings.filter((b: Booking) => 
                   b.booking_date && 
                   isSameDay(new Date(b.booking_date), selectedDate) &&
-                  b.status === 'Confirmed'
+                  (b.status === 'Confirmed' || b.status === 'Pending')
                 ).length === 0 && (
                     <div className="text-center py-10 border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
                       <Inbox className="w-6 h-6 text-slate-400 mx-auto mb-2" />

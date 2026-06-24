@@ -32,7 +32,6 @@ export default function AdminDashboard() {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('All');
 
-  // Hardcoded gatekeeping credential matching your initial configuration
   const ADMIN_PASSWORD = "admin"; 
 
   useEffect(() => {
@@ -64,7 +63,19 @@ export default function AdminDashboard() {
     }
   };
 
+  // Triggers the Edge function to notify the end user about their confirmation/rejection status
+  const notifyUserOfStatusChange = async (targetBooking: Booking, outcome: 'Confirmed' | 'Rejected') => {
+    try {
+      await supabase.functions.invoke('notify-user-status', {
+        body: { booking: targetBooking, status: outcome }
+      });
+    } catch (e) {
+      console.warn("User communication triggered asynchronously:", e);
+    }
+  };
+
   async function updateStatus(id: string | number, nextStatus: 'Confirmed' | 'Rejected') {
+    const target = bookings.find(b => b.id === id);
     const { error } = await supabase
       .from('bookings')
       .update({ status: nextStatus })
@@ -72,6 +83,9 @@ export default function AdminDashboard() {
 
     if (!error) {
       setBookings(prev => prev.map(b => b.id === id ? { ...b, status: nextStatus } : b));
+      if (target) {
+        await notifyUserOfStatusChange(target, nextStatus);
+      }
     }
   }
 
@@ -103,7 +117,6 @@ export default function AdminDashboard() {
     return matchesSearch && matchesStatus;
   });
 
-  // Render Gatekeeper Portal if not authenticated
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 font-sans antialiased">
@@ -157,7 +170,6 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans antialiased">
-      {/* Header Banner */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-6 py-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex items-center gap-3">
@@ -173,7 +185,6 @@ export default function AdminDashboard() {
       </header>
 
       <main className="max-w-7xl mx-auto px-6 py-8">
-        {/* Controls Bar */}
         <div className="flex flex-col md:flex-row gap-4 items-center justify-between mb-6">
           <div className="relative w-full md:w-96">
             <Search className="absolute left-4 top-3.5 w-4 h-4 text-slate-400" />
@@ -201,7 +212,6 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Dense Ledger Table */}
         <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
@@ -218,29 +228,24 @@ export default function AdminDashboard() {
               <tbody className="divide-y divide-slate-100 text-sm text-slate-700">
                 {filteredBookings.map((b) => (
                   <tr key={b.id} className="hover:bg-slate-50/60 transition-colors">
-                    {/* Event & Venue */}
                     <td className="py-4 px-6">
                       <p className="font-semibold text-slate-900">{b.event_name}</p>
                       <p className="text-xs text-slate-400 font-medium mt-0.5">{b.halls?.name || 'Unknown Venue'}</p>
                     </td>
                     
-                    {/* Host & Department */}
                     <td className="py-4 px-6">
                       <p className="font-medium text-slate-800">{b.user_name}</p>
                       <p className="text-xs text-slate-400 font-normal mt-0.5">{b.department}</p>
                     </td>
 
-                    {/* Date */}
                     <td className="py-4 px-6 font-medium whitespace-nowrap text-slate-600">
                       {format(new Date(b.booking_date), 'MMM dd, yyyy')}
                     </td>
 
-                    {/* Time Schedule */}
                     <td className="py-4 px-6 whitespace-nowrap font-medium text-slate-600">
                       {formatTo12Hr(b.start_time)} - {formatTo12Hr(b.end_time)}
                     </td>
 
-                    {/* Status Pill */}
                     <td className="py-4 px-6">
                       <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${
                         b.status === 'Confirmed' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' :
@@ -254,7 +259,6 @@ export default function AdminDashboard() {
                       </span>
                     </td>
 
-                    {/* Action Tools */}
                     <td className="py-4 px-6 text-right whitespace-nowrap">
                       <div className="flex items-center justify-end gap-2">
                         {b.status !== 'Confirmed' && (
