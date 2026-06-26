@@ -27,12 +27,12 @@ serve(async (req: Request) => {
       Venue Location: ${hallName}
       
       Reservation Details:
-      - Event Title: ${detail.event_name}
+      - Event Title: ${detail.event_name || 'N/A'}
       - Host Name: ${detail.user_name || 'N/A'}
       - Host Email: ${detail.user_email || 'N/A'}
-      - Department: ${detail.department}
-      - Date: ${detail.booking_date}
-      - Schedule Window: ${detail.start_time} - ${detail.end_time}
+      - Department: ${detail.department || 'N/A'}
+      - Date: ${detail.booking_date || 'N/A'}
+      - Schedule Window: ${detail.start_time || 'N/A'} - ${detail.end_time || 'N/A'}
     `
 
     const response = await fetch('https://formspree.io/f/xanypwyb', {
@@ -48,7 +48,9 @@ serve(async (req: Request) => {
       }),
     })
 
-    return new Response(JSON.stringify({ success: true }), {
+    const resData = await response.json()
+
+    return new Response(JSON.stringify({ success: true, data: resData }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     })

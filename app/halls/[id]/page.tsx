@@ -92,10 +92,23 @@ export default function BookingPage() {
   const sendAdminAlert = async (type: 'NEW_REQUEST' | 'MODIFICATION' | 'CANCELLATION', detail: any) => {
     try {
       await supabase.functions.invoke('notify-admin', {
-        body: { type, detail, hallName: hall?.name || 'Unknown Venue' }
+        body: { 
+          type, 
+          hallName: hall?.name || 'Unknown Venue',
+          detail: {
+            event_name: detail.event_name,
+            user_name: detail.user_name || 'N/A',
+            user_email: detail.user_email || 'N/A',
+            department: detail.department,
+            booking_date: detail.booking_date,
+            start_time: detail.start_time,
+            end_time: detail.end_time
+          }
+        },
+        headers: { 'Content-Type': 'application/json' }
       });
     } catch (e) {
-      console.warn("Notification microservice handled asynchronously:", e);
+      console.error("Notification trigger failure:", e);
     }
   };
 
@@ -128,7 +141,6 @@ export default function BookingPage() {
     const normStart = formData.startTime.length === 5 ? `${formData.startTime}:00` : formData.startTime;
     const normEnd = formData.endTime.length === 5 ? `${formData.endTime}:00` : formData.endTime;
 
-    // MODIFIED: Conflicts are caught if they overlap with a Confirmed OR a Pending booking
     let query = supabase
       .from('bookings')
       .select('event_name, start_time, end_time, status')
@@ -339,7 +351,7 @@ export default function BookingPage() {
           <div className="w-9 h-9 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-center overflow-hidden shadow-sm">
              <img src="/favicon.ico" alt="Logo" className="w-full h-full object-contain p-1.5" />
           </div>
-          <span className="text-xl font-bold tracking-tight text-slate-900">St. Ann's</span>
+          <span className="text-xl font-bold tracking-tight text-slate-900">St. Ann's Portal</span>
         </div>
       </nav>
 
@@ -353,7 +365,6 @@ export default function BookingPage() {
                 </button>
                 <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-slate-900 leading-tight">{hall.name}</h1>
               </div>
-              {/* MODIFIED: Included a clean amber legend indicator for "Pending Review" statuses */}
               <div className="flex flex-wrap gap-3">
                 <div className="flex items-center gap-2.5 bg-white border border-slate-200 px-4 py-2 rounded-xl text-xs font-medium text-slate-500 shadow-sm"><div className="w-2 h-2 rounded-full bg-emerald-500" /> Available Slot</div>
                 <div className="flex items-center gap-2.5 bg-white border border-slate-200 px-4 py-2 rounded-xl text-xs font-medium text-slate-500 shadow-sm"><div className="w-2 h-2 rounded-full bg-amber-500" /> Pending Review</div>
@@ -379,14 +390,12 @@ export default function BookingPage() {
 
               <div className="grid grid-cols-7 bg-white">
                 {calendarDays.map((day: Date, idx: number) => {
-                  // MODIFIED: Calendar filter includes both Confirmed and Pending array sets
                   const dayBookings = bookings.filter((b: Booking) => 
                     b.booking_date && 
                     isSameDay(new Date(b.booking_date), day) &&
                     (b.status === 'Confirmed' || b.status === 'Pending')
                   );
                   
-                  // Helper boolean to correctly tint slots containing holds amber instead of pink
                   const hasPendingOnly = dayBookings.some(b => b.status === 'Pending') && !dayBookings.some(b => b.status === 'Confirmed');
                   const isCurrentMonth = isSameMonth(day, monthStart);
                   const isToday = isSameDay(day, new Date());
