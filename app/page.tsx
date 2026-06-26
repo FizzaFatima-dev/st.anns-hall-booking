@@ -31,13 +31,15 @@ export default function HomePage() {
   useEffect(() => {
     async function fetchPortalData() {
       try {
+        // Fetch all available venues
         const { data: hallsData } = await supabase.from('halls').select('*').order('name');
         
+        // RESTORED: Fetches today's reservations capturing strictly 'Confirmed' states
         const { data: bookingsData } = await supabase
           .from('bookings')
           .select('id, hall_id, status, booking_date')
           .eq('booking_date', todayStr)
-          .in('status', ['Confirmed', 'Pending']);
+          .eq('status', 'Confirmed');
 
         if (hallsData) {
           const mapNames = hallsData.map((h) => {
@@ -83,7 +85,6 @@ export default function HomePage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {halls.map((hall) => {
             const activeToday = todayBookings.filter(b => b.hall_id === hall.id);
-            const hasPendingOnly = activeToday.every(b => b.status === 'Pending') && activeToday.length > 0;
 
             return (
               <div 
@@ -97,13 +98,10 @@ export default function HomePage() {
                       <Building2 className="w-6 h-6 text-slate-400 group-hover:text-emerald-600 transition-colors" />
                     </div>
                     
+                    {/* RESTORED: Original badge states */}
                     {activeToday.length > 0 ? (
-                      <span className={`px-3 py-1 rounded-full text-[10px] font-bold tracking-wide border uppercase ${
-                        hasPendingOnly 
-                          ? 'bg-amber-50 border-amber-100 text-amber-700' 
-                          : 'bg-rose-50 border-rose-100 text-rose-600'
-                      }`}>
-                        {activeToday.length} {activeToday.length === 1 ? 'Hold Today' : 'Holds Today'} {hasPendingOnly && '(Pending)'}
+                      <span className="px-3 py-1 bg-rose-50 border border-rose-100 text-rose-600 text-[10px] font-bold tracking-wide rounded-full uppercase">
+                        {activeToday.length} {activeToday.length === 1 ? 'Hold Today' : 'Holds Today'}
                       </span>
                     ) : (
                       <span className="px-3 py-1 bg-emerald-50 border border-emerald-100 text-emerald-700 text-[10px] font-bold tracking-wide rounded-full uppercase">Available Today</span>
