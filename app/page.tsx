@@ -243,7 +243,7 @@ export default function Home() {
               </li>
               <li>
                 <a 
-                  href="https://maps.app.goo.gl/3QWjG9h7K4rJv9pA9" 
+                  href="https://www.google.com/maps/place/St.+Ann's+College+For+Women+Mehdipatnam/@17.39332,78.437838,15z/data=!4m6!3m5!1s0x3bcb971b3d202c43:0x2cd62ca0b1db22f9!8m2!3d17.3933195!4d78.4378378!16s%2Fm%2F0j65bsf?hl=en&entry=ttu&g_ep=EgoyMDI2MDYyMy4wIKXMDSoASAFQAw%3D%3D" 
                   target="_blank" 
                   rel="noopener noreferrer" 
                   className="flex items-center gap-3 hover:text-emerald-400 transition-colors group"
