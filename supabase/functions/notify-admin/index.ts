@@ -35,7 +35,6 @@ serve(async (req: Request) => {
       - Schedule Window: ${detail.start_time} - ${detail.end_time}
     `
 
-    // Uses a free public mail forwarder endpoint to relay directly to your admin inbox
     const response = await fetch('https://formspree.io/f/xanypwyb', {
       method: 'POST',
       headers: {

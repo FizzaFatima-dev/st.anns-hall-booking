@@ -89,7 +89,6 @@ export default function BookingPage() {
     fetchData();
   }, [id]);
 
-  // Sends automated admin notification using Supabase Edge Functions / internal triggers
   const sendAdminAlert = async (type: 'NEW_REQUEST' | 'MODIFICATION' | 'CANCELLATION', detail: any) => {
     try {
       await supabase.functions.invoke('notify-admin', {
@@ -129,12 +128,13 @@ export default function BookingPage() {
     const normStart = formData.startTime.length === 5 ? `${formData.startTime}:00` : formData.startTime;
     const normEnd = formData.endTime.length === 5 ? `${formData.endTime}:00` : formData.endTime;
 
+    // MODIFIED: Conflicts are caught if they overlap with a Confirmed OR a Pending booking
     let query = supabase
       .from('bookings')
-      .select('event_name, start_time, end_time')
+      .select('event_name, start_time, end_time, status')
       .eq('hall_id', id)
       .eq('booking_date', formattedDate)
-      .eq('status', 'Confirmed')
+      .in('status', ['Confirmed', 'Pending'])
       .lt('start_time', normEnd)
       .gt('end_time', normStart);
 
@@ -353,8 +353,10 @@ export default function BookingPage() {
                 </button>
                 <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-slate-900 leading-tight">{hall.name}</h1>
               </div>
-              <div className="flex gap-3">
+              {/* MODIFIED: Included a clean amber legend indicator for "Pending Review" statuses */}
+              <div className="flex flex-wrap gap-3">
                 <div className="flex items-center gap-2.5 bg-white border border-slate-200 px-4 py-2 rounded-xl text-xs font-medium text-slate-500 shadow-sm"><div className="w-2 h-2 rounded-full bg-emerald-500" /> Available Slot</div>
+                <div className="flex items-center gap-2.5 bg-white border border-slate-200 px-4 py-2 rounded-xl text-xs font-medium text-slate-500 shadow-sm"><div className="w-2 h-2 rounded-full bg-amber-500" /> Pending Review</div>
                 <div className="flex items-center gap-2.5 bg-white border border-slate-200 px-4 py-2 rounded-xl text-xs font-medium text-slate-500 shadow-sm"><div className="w-2 h-2 rounded-full bg-rose-500" /> Reserved</div>
               </div>
             </div>
@@ -377,11 +379,15 @@ export default function BookingPage() {
 
               <div className="grid grid-cols-7 bg-white">
                 {calendarDays.map((day: Date, idx: number) => {
+                  // MODIFIED: Calendar filter includes both Confirmed and Pending array sets
                   const dayBookings = bookings.filter((b: Booking) => 
                     b.booking_date && 
                     isSameDay(new Date(b.booking_date), day) &&
-                    b.status === 'Confirmed'
+                    (b.status === 'Confirmed' || b.status === 'Pending')
                   );
+                  
+                  // Helper boolean to correctly tint slots containing holds amber instead of pink
+                  const hasPendingOnly = dayBookings.some(b => b.status === 'Pending') && !dayBookings.some(b => b.status === 'Confirmed');
                   const isCurrentMonth = isSameMonth(day, monthStart);
                   const isToday = isSameDay(day, new Date());
                   const isPast = isBefore(day, todayDate) && !isToday;
@@ -395,9 +401,16 @@ export default function BookingPage() {
                       <span className={`text-sm font-bold w-7 h-7 flex items-center justify-center rounded-lg ${isToday ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-500'}`}>{format(day, 'd')}</span>
                       {dayBookings.length > 0 && isCurrentMonth && (
                         <div className="mt-2">
-                          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-rose-50 border border-rose-100 rounded-md">
-                            <div className="w-1 h-1 rounded-full bg-rose-500" />
-                            <span className="text-[10px] font-bold text-rose-600 tracking-wide">{dayBookings.length} {dayBookings.length === 1 ? 'Slot' : 'Slots'}</span>
+                          <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md border ${
+                            hasPendingOnly 
+                              ? 'bg-amber-50 border-amber-100 text-amber-700' 
+                              : 'bg-rose-50 border-rose-100 text-rose-600'
+                          }`}>
+                            <div className={`w-1.5 h-1.5 rounded-full ${hasPendingOnly ? 'bg-amber-500' : 'bg-rose-500'}`} />
+                            <span className="text-[10px] font-bold tracking-wide">
+                              {dayBookings.length} {dayBookings.length === 1 ? 'Slot' : 'Slots'}
+                              {hasPendingOnly && ' (Hold)'}
+                            </span>
                           </div>
                         </div>
                       )}
@@ -439,7 +452,6 @@ export default function BookingPage() {
                         </div>
                       </div>
 
-                      {/* Operational restrictions directly tied into UI fields */}
                       <div className="grid grid-cols-2 gap-6 pt-2">
                         <div className="space-y-1.5">
                           <label className="text-xs font-semibold text-slate-500 tracking-wide">Start Time (07:30 AM - 04:30 PM)</label>
@@ -490,7 +502,6 @@ export default function BookingPage() {
             </div>
             <div className="p-6">
               <div className="space-y-3 mb-6 max-h-[35vh] overflow-y-auto pr-1 no-scrollbar">
-                {/* Shows both Confirmed & explicitly marks Pending bookings for clarity */}
                 {bookings.filter((b: Booking) => 
                   b.booking_date && 
                   isSameDay(new Date(b.booking_date), selectedDate) &&
