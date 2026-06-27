@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
+import Head from 'next/head'; // Added Next.js Head import
 import { 
   Users, Wifi, ArrowRight, 
   Calendar, Mail, MapPin, Zap,
@@ -73,6 +74,14 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-white font-sans antialiased text-slate-900 selection:bg-emerald-100 selection:text-emerald-900">
       
+      {/* SEO & Google Verification Meta Tags */}
+      <Head>
+        <title>St. Ann's College Hall Booking Portal | Official Venue Reservation</title>
+        <meta name="description" content="Welcome to the official St. Ann's College Hall Booking Portal. View real-time availability and book campus spaces including Gnanamma Hall, Deickmann Hall, and St. Joseph's Auditorium." />
+        <meta name="robots" content="index, follow" />
+        <meta name="google-site-verification" content="IrNHTqWostn9GIlQFJOqHwLIZ55rJEE0xOljT5gyehs" />
+      </Head>
+
       {/* Navigation */}
       <nav className={`fixed top-0 w-full z-[100] flex justify-between items-center px-6 md:px-12 py-5 transition-all duration-500 ${isScrolled ? 'bg-white/80 backdrop-blur-md shadow-sm border-b border-slate-100 py-4' : 'bg-transparent'}`}>
         <div className="flex items-center gap-3 group cursor-pointer" onClick={scrollToTop}>
