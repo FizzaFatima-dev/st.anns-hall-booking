@@ -67,7 +67,11 @@ export default function AdminDashboard() {
   const notifyUserOfStatusChange = async (targetBooking: Booking, outcome: 'Confirmed' | 'Rejected') => {
     try {
       await supabase.functions.invoke('notify-user-status', {
-        body: { booking: targetBooking, status: outcome }
+        body: { booking: targetBooking, status: outcome },
+        headers: {
+          // Explicitly pass content-type to ensure the Edge function handles the unauthenticated trigger safely
+          'Content-Type': 'application/json'
+        }
       });
     } catch (e) {
       console.warn("User communication triggered asynchronously:", e);
