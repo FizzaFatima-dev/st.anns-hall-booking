@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
-import Head from 'next/head'; // Added Next.js Head import
 import { 
   Users, Wifi, ArrowRight, 
   Calendar, Mail, MapPin, Zap,
@@ -28,6 +27,9 @@ export default function Home() {
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
+    // Dynamically update document titles since this is a client component
+    document.title = "St. Ann's College Hall Booking Portal | Official Venue Reservation";
+    
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
     window.addEventListener('scroll', handleScroll);
     
@@ -71,16 +73,23 @@ export default function Home() {
     return "/Auditorium.jpeg"; 
   };
 
+  // Structured Data to tell Google to replace "Vercel" with your brand name
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "St. Ann's Hall Booking",
+    "alternateName": ["St. Ann's College Venue Reservation", "St. Ann's Halls"],
+    "url": "https://st-anns-hall-booking.vercel.app/"
+  };
+
   return (
     <div className="min-h-screen bg-white font-sans antialiased text-slate-900 selection:bg-emerald-100 selection:text-emerald-900">
       
-      {/* SEO & Google Verification Meta Tags */}
-      <Head>
-        <title>St. Ann's College Hall Booking Portal | Official Venue Reservation</title>
-        <meta name="description" content="Welcome to the official St. Ann's College Hall Booking Portal. View real-time availability and book campus spaces including Gnanamma Hall, Deickmann Hall, and St. Joseph's Auditorium." />
-        <meta name="robots" content="index, follow" />
-        <meta name="google-site-verification" content="IrNHTqWostn9GIlQFJOqHwLIZ55rJEE0xOljT5gyehs" />
-      </Head>
+      {/* Injecting Structured Data & Search Engine Hints Directly */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
 
       {/* Navigation */}
       <nav className={`fixed top-0 w-full z-[100] flex justify-between items-center px-6 md:px-12 py-5 transition-all duration-500 ${isScrolled ? 'bg-white/80 backdrop-blur-md shadow-sm border-b border-slate-100 py-4' : 'bg-transparent'}`}>
@@ -115,11 +124,11 @@ export default function Home() {
               Official Booking Portal
             </div>
             <h1 className="text-5xl md:text-7xl font-black text-white leading-[0.95] tracking-tighter mb-6 uppercase">
-              Book Your <br />
-              <span className="text-emerald-400">Campus Space</span>
+              St. Ann's College <br />
+              <span className="text-emerald-400">Hall Booking</span>
             </h1>
             <p className="text-lg text-slate-300 mb-8 max-w-md font-medium leading-relaxed opacity-70 border-l border-emerald-500/30 pl-6">
-              Experience seamless venue reservation. Designed for efficiency, built for excellence.
+              Reserve campus venues, check schedules, and manage event spaces at St. Ann's College for Women, Mehdipatnam.
             </p>
             <button 
               onClick={scrollToAvailability}
@@ -161,9 +170,9 @@ export default function Home() {
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-20 gap-8">
             <div className="max-w-2xl">
                 <span className="text-emerald-600 font-black text-[12px] uppercase tracking-[0.5em] mb-4 block">Selection</span>
-                <h2 className="text-5xl md:text-6xl font-black text-slate-900 tracking-tighter uppercase leading-[0.8] mb-6">Hall Availability</h2>
+                <h2 className="text-5xl md:text-6xl font-black text-slate-900 tracking-tighter uppercase leading-[0.8] mb-6">St. Ann's Seminar Halls & Auditorium</h2>
                 <p className="text-slate-500 text-lg font-medium leading-relaxed opacity-70">
-                  Select a venue to view its real-time schedule and technical specifications.
+                  Select an institutional venue to view its real-time availability calendar, seat capacity, and tech specifications.
                 </p>
             </div>
             <div className="text-right hidden md:block">

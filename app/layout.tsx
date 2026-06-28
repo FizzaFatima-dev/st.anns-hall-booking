@@ -12,9 +12,21 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// Optimized metadata for broader keyword reach and explicit brand naming
 export const metadata: Metadata = {
-  title: "St. Ann's | Hall Booking Portal",
-  description: "Book venue for your event at St. Ann's Hall",
+  title: "St. Ann's College Hall Booking Portal | Official Venue Reservation",
+  description: "Welcome to the official St. Ann's College Hall Booking Portal. View real-time availability and book campus spaces including Gnanamma Hall, Deickmann Hall, and St. Joseph's Auditorium.",
+  alternates: {
+    canonical: 'https://st-anns-hall-booking.vercel.app/',
+  },
+  // OpenGraph tags help control how social networks and search engine snippets pull your info
+  openGraph: {
+    title: "St. Ann's College Hall Booking Portal",
+    description: "Official venue coordination and booking platform for St. Ann's College.",
+    url: "https://st-anns-hall-booking.vercel.app/",
+    siteName: "St. Ann's Hall Booking", // Explicitly tells crawlers what the name above the URL should be
+    type: "website",
+  }
 };
 
 export default function RootLayout({
