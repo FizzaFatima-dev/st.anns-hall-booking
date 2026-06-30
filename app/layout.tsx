@@ -15,6 +15,7 @@ const geistMono = Geist_Mono({
 // Optimized metadata for broader keyword reach and explicit brand naming
 export const metadata: Metadata = {
   title: "St. Ann's College Hall Booking Portal | Official Venue Reservation",
+  manifest: "/manifest.json",
   description: "Welcome to the official St. Ann's College Hall Booking Portal. View real-time availability and book campus spaces including Gnanamma Hall, Deickmann Hall, and St. Joseph's Auditorium.",
   alternates: {
     canonical: 'https://st-anns-hall-booking.vercel.app/',
@@ -43,3 +44,4 @@ export default function RootLayout({
     </html>
   );
 }
+
