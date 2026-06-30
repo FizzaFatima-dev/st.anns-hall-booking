@@ -1,7 +1,7 @@
 {
-  "name": "St. Ann's Hall Booking Portal",
+  "name": "St. Ann's College Hall Booking Portal",
   "short_name": "St. Ann's Booking",
-  "description": "Book and manage academic and cultural event venues seamlessly.",
+  "description": "Welcome to the official St. Ann's College Hall Booking Portal.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -9,7 +9,7 @@
   "icons": [
     {
       "src": "https://st-anns-hall-booking.vercel.app/favicon.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
+      "sizes": "512x512",
       "type": "image/x-icon"
     }
   ]

@@ -40,8 +40,24 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {children}
+        
+        {/* Safely registers the sw.js cache worker on window mount */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js')
+                    .then(function(reg) { console.log('ServiceWorker registration successful'); })
+                    .catch(function(err) { console.log('ServiceWorker registration failed: ', err); });
+                });
+              }
+            `,
+          }}
+        />
+      </body>
     </html>
   );
 }
-
