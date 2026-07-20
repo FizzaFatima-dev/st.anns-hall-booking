@@ -63,20 +63,24 @@ export default function AdminDashboard() {
     }
   };
 
-  // Triggers the Edge function to notify the end user about their confirmation/rejection status
-  const notifyUserOfStatusChange = async (targetBooking: Booking, outcome: 'Confirmed' | 'Rejected') => {
-    try {
-      await supabase.functions.invoke('notify-user-status', {
-        body: { booking: targetBooking, status: outcome },
-        headers: {
-          // Explicitly pass content-type to ensure the Edge function handles the unauthenticated trigger safely
-          'Content-Type': 'application/json'
-        }
-      });
-    } catch (e) {
-      console.warn("User communication triggered asynchronously:", e);
-    }
-  };
+
+   const notifyUserOfStatusChange = async (targetBooking: Booking, outcome: 'Confirmed' | 'Rejected') => {
+  try {
+    await supabase.functions.invoke('notify-user-status', {
+      body: { 
+        email: targetBooking.user_email, // Make sure column aligns with database text field
+        eventName: targetBooking.event_name, 
+        status: outcome 
+      },
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    console.log(`Notification request sent to backend for ${targetBooking.user_email}`);
+  } catch (e) {
+    console.warn("User communication error:", e);
+  }
+};
 
   async function updateStatus(id: string | number, nextStatus: 'Confirmed' | 'Rejected') {
     const target = bookings.find(b => b.id === id);

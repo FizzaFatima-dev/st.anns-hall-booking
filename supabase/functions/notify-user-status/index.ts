@@ -72,13 +72,14 @@ serve(async (req: Request) => {
       </div>
     `
 
-    // 5. Connect and send directly through Google's SMTP network
+// 5. Connect and send directly through Google's SMTP network
     const client = new SmtpClient()
-    await client.connectTLS({
+    await client.connect({
       hostname: "smtp.gmail.com",
-      port: 465,
+      port: 587,
       username: SMTP_USER,
       password: SMTP_PASS,
+      tls: true, // This enables STARTTLS upgrade safely
     })
 
     await client.send({
