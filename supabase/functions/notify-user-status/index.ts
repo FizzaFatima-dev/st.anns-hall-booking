@@ -22,11 +22,11 @@ serve(async (req: Request) => {
     const { record, old_record } = await req.json()
 
     // 1. Safety check: Break early if the status hasn't actually changed
-    if (record.status === old_record.status) {
+    if (record.status?.toLowerCase() === old_record.status?.toLowerCase()) {
       return new Response(JSON.stringify({ message: "No status change detected." }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      })
+       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+       status: 200,
+    })
     }
 
     const userEmail = record.user_email
@@ -97,6 +97,7 @@ serve(async (req: Request) => {
       status: 200,
     })
   } catch (error: any) {
+    console.error("FUNCTION ERROR EXECUTION CRASH:", error); // <-- Add this line!
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 400,

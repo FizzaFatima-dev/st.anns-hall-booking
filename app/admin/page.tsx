@@ -63,27 +63,7 @@ export default function AdminDashboard() {
     }
   };
 
-
-   const notifyUserOfStatusChange = async (targetBooking: Booking, outcome: 'Confirmed' | 'Rejected') => {
-  try {
-    await supabase.functions.invoke('notify-user-status', {
-      body: { 
-        email: targetBooking.user_email, // Make sure column aligns with database text field
-        eventName: targetBooking.event_name, 
-        status: outcome 
-      },
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
-    console.log(`Notification request sent to backend for ${targetBooking.user_email}`);
-  } catch (e) {
-    console.warn("User communication error:", e);
-  }
-};
-
   async function updateStatus(id: string | number, nextStatus: 'Confirmed' | 'Rejected') {
-    const target = bookings.find(b => b.id === id);
     const { error } = await supabase
       .from('bookings')
       .update({ status: nextStatus })
@@ -91,9 +71,9 @@ export default function AdminDashboard() {
 
     if (!error) {
       setBookings(prev => prev.map(b => b.id === id ? { ...b, status: nextStatus } : b));
-      if (target) {
-        await notifyUserOfStatusChange(target, nextStatus);
-      }
+      console.log(`Database updated successfully to ${nextStatus}. Automated Webhook will now fire the email.`);
+    } else {
+      console.error("Error updating status:", error);
     }
   }
 
